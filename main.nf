@@ -26,6 +26,10 @@ params.gene_bed      = getGenomeAttribute('gene_bed')
 params.tss_bed       = getGenomeAttribute('tss_bed')
 params.blacklist     = getGenomeAttribute('blacklist')
 params.mito_name     = getGenomeAttribute('mito_name')
+params.dict          = params.dict ?: getGenomeAttribute('dict')
+params.known_sites   = params.known_sites ?: getGenomeAttribute('known_sites')
+params.known_sites_tbi = params.known_sites_tbi ?: getGenomeAttribute('known_sites_tbi')
+params.vep_cache     = params.vep_cache ?: getGenomeAttribute('vep_cache')
 params.macs_gsize    = getMacsGsize(params)
 
 /*
@@ -58,6 +62,7 @@ workflow NFCORE_ATACSEQ {
         params.genome,
         params.genomes,
         params.aligner,
+        params.run_variants,
         params.fasta,
         params.gtf,
         params.gff,
@@ -70,6 +75,7 @@ workflow NFCORE_ATACSEQ {
         params.bowtie2_index,
         params.chromap_index,
         params.star_index,
+        params.dict,
         params.macs_gsize,
         params.read_length
     )
@@ -84,6 +90,7 @@ workflow NFCORE_ATACSEQ {
         ch_samplesheet,
         PREPARE_GENOME.out.fasta,
         PREPARE_GENOME.out.fai,
+        PREPARE_GENOME.out.dict,
         PREPARE_GENOME.out.gtf,
         PREPARE_GENOME.out.gene_bed,
         PREPARE_GENOME.out.tss_bed,

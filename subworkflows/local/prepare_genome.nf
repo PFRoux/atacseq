@@ -22,6 +22,7 @@ include { BWA_INDEX            } from '../../modules/nf-core/bwa/index/main'
 include { BOWTIE2_BUILD        } from '../../modules/nf-core/bowtie2/build/main'
 include { CHROMAP_INDEX        } from '../../modules/nf-core/chromap/index/main'
 include { KHMER_UNIQUEKMERS    } from '../../modules/nf-core/khmer/uniquekmers/main'
+include { GATK4_CREATESEQUENCEDICTIONARY } from '../../modules/nf-core/gatk4/createsequencedictionary/main'
 
 include { STAR_GENOMEGENERATE      } from '../../modules/local/star_genomegenerate'
 include { GTF2BED                  } from '../../modules/local/gtf2bed'
@@ -34,6 +35,7 @@ workflow PREPARE_GENOME {
     genome             //  string: genome name
     genomes            //     map: genome attributes
     prepare_tool_index //  string: tool to prepare index for
+    run_variants       // boolean: prepare variant-calling references
     fasta              //    path: path to genome fasta file
     gtf                //    file: /path/to/genome.gtf
     gff                //    file: /path/to/genome.gff
@@ -46,6 +48,7 @@ workflow PREPARE_GENOME {
     bowtie2_index      //    file: /path/to/bowtie2/index/
     chromap_index      //    file: /path/to/chromap/index/
     star_index         //    file: /path/to/star/index/
+    dict               //    file: /path/to/genome.dict
     macs_gsize         // integer: MACS3 genome size
     read_length        // integer: read length
 
@@ -170,16 +173,28 @@ workflow PREPARE_GENOME {
     // Uncompress BWA index or generate from scratch if required
     //
     ch_bwa_index = channel.empty()
-    if (prepare_tool_index == 'bwa') {
+    if (prepare_tool_index == 'bwa' || run_variants) {
         if (bwa_index) {
             if (bwa_index.endsWith('.tar.gz')) {
                 ch_bwa_index = UNTAR_BWA_INDEX ( [ [:], bwa_index ] ).untar
                 ch_versions  = ch_versions.mix(UNTAR_BWA_INDEX.out.versions)
             } else {
-                ch_bwa_index = [ [:], file(params.bwa_index, checkIfExists: true)]
+                ch_bwa_index = channel.value([ [:], file(bwa_index, checkIfExists: true) ])
             }
         } else {
             ch_bwa_index = BWA_INDEX ( ch_fasta.map { item -> [ [:], item ] } ).index
+        }
+    }
+
+    //
+    // Use or create GATK sequence dictionary for variant calling
+    //
+    ch_dict = channel.value([ [:], [] ])
+    if (run_variants) {
+        if (dict) {
+            ch_dict = channel.value([ [:], file(dict, checkIfExists: true) ])
+        } else {
+            ch_dict = GATK4_CREATESEQUENCEDICTIONARY ( ch_fasta.map { item -> [ [:], item ] } ).dict
         }
     }
 
@@ -193,7 +208,7 @@ workflow PREPARE_GENOME {
                 ch_bowtie2_index = UNTAR_BOWTIE2_INDEX ( [ [:], bowtie2_index ] ).untar
                 ch_versions  = ch_versions.mix(UNTAR_BOWTIE2_INDEX.out.versions)
             } else {
-                ch_bowtie2_index = [ [:], file(bowtie2_index, checkIfExists: true) ]
+                ch_bowtie2_index = channel.value([ [:], file(bowtie2_index, checkIfExists: true) ])
             }
         } else {
             ch_bowtie2_index = BOWTIE2_BUILD ( ch_fasta.map { item -> [ [:], item ] } ).index
@@ -253,6 +268,7 @@ workflow PREPARE_GENOME {
     emit:
     fasta         = ch_fasta                      //    path: genome.fasta
     fai           = ch_fai                        //    path: genome.fai
+    dict          = ch_dict                       //    path: genome.dict
     gtf           = ch_gtf                        //    path: genome.gtf
     gene_bed      = ch_gene_bed                   //    path: gene.bed
     tss_bed       = ch_tss_bed                    //    path: tss.bed

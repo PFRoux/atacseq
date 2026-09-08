@@ -200,6 +200,27 @@ def validateInputParameters() {
     if (!['RPKM', 'CPM', 'BPM', 'RPGC', 'None'].contains(params.bamcoverage_normalization)) {
         error("Invalid --bamcoverage_normalization '${params.bamcoverage_normalization}'. Please use one of: RPKM, CPM, BPM, RPGC, None.")
     }
+
+    if (params.run_variants) {
+        def callers = params.variant_callers.tokenize(',').collect { it.trim() }.findAll { it }
+        def allowedCallers = ['deepvariant', 'freebayes', 'haplotypecaller', 'bcftools']
+        def invalidCallers = callers.findAll { !allowedCallers.contains(it) }
+        if (!callers) {
+            error("No variant caller selected. Please set '--variant_callers' to a comma-separated subset of: ${allowedCallers.join(', ')}.")
+        }
+        if (invalidCallers) {
+            error("Invalid --variant_callers value(s): ${invalidCallers.join(', ')}. Please use a comma-separated subset of: ${allowedCallers.join(', ')}.")
+        }
+        if (!params.skip_bqsr && (!params.known_sites || !params.known_sites_tbi)) {
+            error("GATK BQSR requires '--known_sites' and '--known_sites_tbi'. Provide both, or set '--skip_bqsr true'.")
+        }
+        if (params.variants_in_peaks_only && params.skip_consensus_peaks) {
+            error("Variant filtering in peaks requires consensus peaks. Please disable '--skip_consensus_peaks' or set '--variants_in_peaks_only false'.")
+        }
+        if (params.run_oncoplot && params.skip_variant_annotation) {
+            error("Please disable '--run_oncoplot' when using '--skip_variant_annotation true'.")
+        }
+    }
 }
 
 //

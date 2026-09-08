@@ -35,6 +35,8 @@ include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_REPL
 include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../subworkflows/local/bam_footprint_tobias'
 include { BAM_SUPERENHANCER_ROSE as MERGED_LIBRARY_SUPERENHANCER_ROSE } from '../subworkflows/local/bam_superenhancer_rose'
 include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS } from '../modules/local/bedtools/multicov_counts'
+include { FASTQ_VARIANT_CALLING_ATAC } from '../subworkflows/local/fastq_variant_calling_atac'
+include { BED_SLOP as CONSENSUS_PEAKS_BED_SLOP } from '../modules/local/bed_slop'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,6 +79,7 @@ workflow ATACSEQ {
     ch_samplesheet   // channel: path(sample_sheet.csv)
     ch_fasta         // channel: path(genome.fa)
     ch_fai           // channel: path(genome.fai)
+    ch_dict          // channel: path(genome.dict)
     ch_gtf           // channel: path(genome.gtf)
     ch_gene_bed      // channel: path(gene.beds)
     ch_tss_bed       // channel: path(genome.tss.bed)
@@ -540,6 +543,10 @@ workflow ATACSEQ {
     ch_deseq2_clustering_library_multiqc = channel.empty()
     ch_tobias_bindetect_multiqc          = channel.empty()
     ch_rose_super_enhancer_counts        = channel.empty()
+    ch_variant_vcf_multiqc               = channel.empty()
+    ch_variant_alignment_multiqc         = channel.empty()
+    ch_variant_oncoplot                  = channel.empty()
+    ch_variant_peak_regions              = channel.value([ [:], [] ])
     if (!params.skip_consensus_peaks) {
         MERGED_LIBRARY_CONSENSUS_PEAKS (
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
@@ -564,6 +571,62 @@ workflow ATACSEQ {
                 .map { meta, bed, sample_names, bams, bais -> [ meta, bed, sample_names, bams, bais ] }
         )
         ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS.out.versions)
+
+        if (params.variants_in_peaks_only) {
+            CONSENSUS_PEAKS_BED_SLOP (
+                ch_macs3_consensus_library_bed,
+                ch_fai.map { fai -> [ [:], fai ] },
+                params.peak_filter_slop
+            )
+            ch_variant_peak_regions = CONSENSUS_PEAKS_BED_SLOP.out.bed
+            ch_versions = ch_versions.mix(CONSENSUS_PEAKS_BED_SLOP.out.versions)
+        }
+    }
+
+    //
+    // SUBWORKFLOW: Short variant calling from ATAC-seq reads
+    //
+    if (params.run_variants) {
+        def variant_callers = params.variant_callers
+            .tokenize(',')
+            .collect { it.trim() }
+            .findAll { it }
+
+        def known_sites = params.known_sites ?
+            params.known_sites.toString().tokenize(',').collect { file(it.trim(), checkIfExists: true) } :
+            []
+        def known_sites_tbi = params.known_sites_tbi ?
+            params.known_sites_tbi.toString().tokenize(',').collect { file(it.trim(), checkIfExists: true) } :
+            []
+        def ch_known_sites = channel.value([ [ id: 'known_sites' ], known_sites ])
+        def ch_known_sites_tbi = channel.value([ [ id: 'known_sites_tbi' ], known_sites_tbi ])
+        def ch_vep_cache = params.vep_cache ?
+            channel.value([ [ id: 'vep_cache' ], file(params.vep_cache, checkIfExists: true) ]) :
+            channel.value([ [:], [] ])
+
+        FASTQ_VARIANT_CALLING_ATAC (
+            FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads,
+            ch_bwa_index,
+            ch_fasta.map { fasta -> [ [:], fasta ] },
+            ch_fai.map { fai -> [ [:], fai ] },
+            ch_dict,
+            ch_known_sites,
+            ch_known_sites_tbi,
+            ch_vep_cache,
+            params.skip_bqsr,
+            params.skip_variant_annotation,
+            params.vep_genome,
+            params.vep_species,
+            params.vep_cache_version,
+            variant_callers,
+            params.run_oncoplot,
+            params.variants_in_peaks_only,
+            ch_variant_peak_regions
+        )
+        ch_variant_vcf_multiqc       = FASTQ_VARIANT_CALLING_ATAC.out.vcf_mqc
+        ch_variant_alignment_multiqc = FASTQ_VARIANT_CALLING_ATAC.out.multiqc_files
+        ch_variant_oncoplot          = FASTQ_VARIANT_CALLING_ATAC.out.oncoplot
+        ch_versions = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
     }
 
     //
@@ -943,6 +1006,8 @@ workflow ATACSEQ {
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.plot_homer_annotatepeaks_tsv.collect().ifEmpty([]),
             ch_featurecounts_library_multiqc.collect { item -> item[1] }.ifEmpty([]),
             ch_tobias_bindetect_multiqc.collect { item -> item[1] }.ifEmpty([]),
+            ch_variant_vcf_multiqc.collect { item -> item[1] }.ifEmpty([]),
+            ch_variant_alignment_multiqc.collect().ifEmpty([]),
 
             ch_markduplicates_replicate_stats.collect { item -> item[1] }.ifEmpty([]),
             ch_markduplicates_replicate_flagstat.collect { item -> item[1] }.ifEmpty([]),

@@ -155,6 +155,14 @@
                     "fa_icon": "fas fa-procedures",
                     "description": "Path to BED file containing transcription start sites. This will be created from the gene BED file if not specified."
                 },
+                "dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Path to GATK sequence dictionary. This will be created from the FASTA file if not specified and --run_variants is enabled.",
+                    "fa_icon": "far fa-file-code"
+                },
                 "macs_gsize": {
                     "type": "number",
                     "description": "Effective genome size parameter required by MACS3.",
@@ -495,6 +503,101 @@
                 }
             }
         },
+        "variant_calling_options": {
+            "title": "Variant calling options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for optional short-variant calling from ATAC-seq reads.",
+            "properties": {
+                "run_variants": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run short variant calling on ATAC-seq reads using BWA-MEM, GATK preprocessing and selected SNP/indel callers.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "variant_callers": {
+                    "type": "string",
+                    "default": "haplotypecaller,freebayes,bcftools",
+                    "description": "Comma-separated subset of short-variant callers to run.",
+                    "help_text": "Available callers: haplotypecaller, freebayes, bcftools, deepvariant. DeepVariant is available but can be slow and requires a container engine.",
+                    "pattern": "^((deepvariant|freebayes|haplotypecaller|bcftools)(,(deepvariant|freebayes|haplotypecaller|bcftools))*)?$",
+                    "fa_icon": "fas fa-list"
+                },
+                "deepvariant_model_type": {
+                    "type": "string",
+                    "default": "WGS",
+                    "enum": ["WGS", "WES", "PACBIO", "ONT_R104", "HYBRID_PACBIO_ILLUMINA"],
+                    "description": "DeepVariant model type passed to run_deepvariant as --model_type.",
+                    "fa_icon": "fas fa-brain"
+                },
+                "skip_bqsr": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip GATK Base Quality Score Recalibration before variant calling.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "known_sites": {
+                    "type": "string",
+                    "description": "Comma-separated known-sites VCF file(s) for GATK BQSR.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "known_sites_tbi": {
+                    "type": "string",
+                    "description": "Comma-separated tabix index file(s) matching --known_sites.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "variants_in_peaks_only": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Filter final VCFs to variants located in merged-library consensus peak regions expanded by --peak_filter_slop.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "peak_filter_slop": {
+                    "type": "integer",
+                    "default": 500,
+                    "minimum": 0,
+                    "description": "Number of bp added on each side of consensus peaks before optional VCF filtering.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "skip_variant_annotation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip VEP/vcf2maf annotation of variant calls.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "vep_cache": {
+                    "type": "string",
+                    "format": "path",
+                    "exists": true,
+                    "description": "Path to the local Ensembl VEP cache.",
+                    "fa_icon": "fas fa-database"
+                },
+                "vep_genome": {
+                    "type": "string",
+                    "default": "GRCh38",
+                    "description": "Genome assembly name passed to VEP.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "vep_species": {
+                    "type": "string",
+                    "default": "homo_sapiens",
+                    "description": "Species name passed to VEP.",
+                    "fa_icon": "fas fa-signature"
+                },
+                "vep_cache_version": {
+                    "type": "integer",
+                    "default": 113,
+                    "description": "Ensembl VEP cache version.",
+                    "fa_icon": "fas fa-sort-numeric-down"
+                },
+                "run_oncoplot": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Generate a cohort maftools oncoplot from annotated variants.",
+                    "fa_icon": "fas fa-chart-bar"
+                }
+            }
+        },
         "deseq_qc_options": {
             "title": "Differential analysis options",
             "type": "object",
@@ -757,6 +860,9 @@
         },
         {
             "$ref": "#/$defs/footprinting_options"
+        },
+        {
+            "$ref": "#/$defs/variant_calling_options"
         },
         {
             "$ref": "#/$defs/deseq_qc_options"

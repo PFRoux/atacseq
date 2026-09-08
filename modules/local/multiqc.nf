@@ -40,6 +40,8 @@ process MULTIQC {
     path ('macs3/merged_library/annotation/*')
     path ('macs3/merged_library/featurecounts/*')
     path ('tobias/merged_library/*')
+    path ('variants/*')
+    path ('variants/*')
 
     path ('alignment/merged_replicate/*')
     path ('alignment/merged_replicate/*')
