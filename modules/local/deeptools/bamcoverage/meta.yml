@@ -1,0 +1,71 @@
+name: "deeptools_bamcoverage"
+description: Generate a normalized bigWig coverage track from a BAM file with deepTools bamCoverage.
+keywords:
+  - coverage
+  - bigwig
+  - bam
+  - deeptools
+tools:
+  - deeptools:
+      description: A set of user-friendly tools for normalization and visualization of deep-sequencing data
+      homepage: https://deeptools.readthedocs.io/
+      documentation: https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html
+      tool_dev_url: https://github.com/deeptools/deepTools
+      doi: "10.1093/nar/gku365"
+      licence: ["GPL v3"]
+      identifier: biotools:deeptools
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - bam:
+        type: file
+        description: Coordinate-sorted BAM file
+        pattern: "*.bam"
+        ontologies:
+          - edam: http://edamontology.org/format_2572 # BAM
+    - index:
+        type: file
+        description: BAM index file
+        pattern: "*.{bai,csi}"
+        ontologies: []
+  - effective_genome_size:
+      type: integer
+      description: Effective genome size used by bamCoverage when normalization is RPGC
+  - normalization:
+      type: string
+      description: deepTools bamCoverage normalization method
+  - bin_size:
+      type: integer
+      description: Size of the bins in bp
+  - smooth_length:
+      type: integer
+      description: Smoothing window length in bp
+  - fragment_size:
+      type: integer
+      description: Estimated fragment size used to extend single-end reads
+output:
+  bigwig:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.bigWig":
+          type: file
+          description: Normalized bigWig coverage file
+          pattern: "*.bigWig"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750 # YAML
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

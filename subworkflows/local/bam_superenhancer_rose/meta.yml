@@ -1,0 +1,63 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "bam_superenhancer_rose"
+description: Call ROSE super-enhancers from merged library-level ATAC-seq BAMs and MACS3 peaks
+keywords:
+  - atac-seq
+  - rose
+  - enhancer
+  - super-enhancer
+components:
+  - gtf_to_rose_annotation
+  - rose
+  - consensus_super_enhancers
+  - bedtools/multicov_counts
+input:
+  - ch_peaks:
+      type: file
+      description: |
+        Channel containing per-sample MACS3 peak files.
+        Structure: [ val(meta), path(peaks) ]
+  - ch_bam_bai:
+      type: file
+      description: |
+        Channel containing merged library-level BAM files and indexes.
+        Structure: [ val(meta), path(bam), path(bai) ]
+  - ch_gtf:
+      type: file
+      description: GTF annotation used to generate ROSE-compatible annotation
+  - ch_multicov_bams:
+      type: file
+      description: |
+        Channel containing ordered sample names, BAM files and BAM indexes for bedtools multicov.
+        Structure: [ val(sample_names), path(bams), path(bais) ]
+  - rose_stitch:
+      type: integer
+      description: ROSE enhancer stitching distance in bp
+  - rose_tss:
+      type: integer
+      description: ROSE TSS exclusion distance in bp
+output:
+  - annotation:
+      type: file
+      description: ROSE-compatible annotation generated from GTF
+  - super_enhancers:
+      type: file
+      description: Per-sample ROSE SuperStitched tables
+  - all_enhancers:
+      type: file
+      description: Per-sample ROSE AllStitched tables
+  - consensus_bed:
+      type: file
+      description: Consensus super-enhancer BED file
+  - raw_counts:
+      type: file
+      description: Raw count matrix over consensus super-enhancers
+  - versions:
+      type: file
+      description: Files containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

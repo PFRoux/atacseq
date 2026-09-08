@@ -25,12 +25,16 @@ include { BIGWIG_PLOT_DEEPTOOLS as MERGED_LIBRARY_BIGWIG_PLOT_DEEPTOOLS       } 
 include { BAM_FILTER_BAMTOOLS as MERGED_LIBRARY_FILTER_BAM                    } from '../subworkflows/local/bam_filter_bamtools'
 include { BAM_BEDGRAPH_BIGWIG_BEDTOOLS_UCSC as MERGED_LIBRARY_BAM_TO_BIGWIG   } from '../subworkflows/local/bam_bedgraph_bigwig_bedtools_ucsc'
 include { BAM_BEDGRAPH_BIGWIG_BEDTOOLS_UCSC as MERGED_REPLICATE_BAM_TO_BIGWIG } from '../subworkflows/local/bam_bedgraph_bigwig_bedtools_ucsc'
+include { DEEPTOOLS_BAMCOVERAGE as MERGED_LIBRARY_DEEPTOOLS_BAMCOVERAGE        } from '../modules/local/deeptools/bamcoverage'
+include { DEEPTOOLS_BAMCOVERAGE as MERGED_REPLICATE_DEEPTOOLS_BAMCOVERAGE      } from '../modules/local/deeptools/bamcoverage'
 
 include { BAM_PEAKS_CALL_QC_ANNOTATE_MACS3_HOMER as MERGED_LIBRARY_CALL_ANNOTATE_PEAKS   } from '../subworkflows/local/bam_peaks_call_qc_annotate_macs3_homer.nf'
 include { BAM_PEAKS_CALL_QC_ANNOTATE_MACS3_HOMER as MERGED_REPLICATE_CALL_ANNOTATE_PEAKS } from '../subworkflows/local/bam_peaks_call_qc_annotate_macs3_homer.nf'
 include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_LIBRARY_CONSENSUS_PEAKS   } from '../subworkflows/local/bed_consensus_quantify_qc_bedtools_featurecounts_deseq2.nf'
 include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_REPLICATE_CONSENSUS_PEAKS } from '../subworkflows/local/bed_consensus_quantify_qc_bedtools_featurecounts_deseq2.nf'
 include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../subworkflows/local/bam_footprint_tobias'
+include { BAM_SUPERENHANCER_ROSE as MERGED_LIBRARY_SUPERENHANCER_ROSE } from '../subworkflows/local/bam_superenhancer_rose'
+include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS } from '../modules/local/bedtools/multicov_counts'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -381,13 +385,40 @@ workflow ATACSEQ {
     //
     // SUBWORKFLOW: Normalised bigWig coverage tracks
     //
-    MERGED_LIBRARY_BAM_TO_BIGWIG (
-        // MERGED_LIBRARY_FILTER_BAM.out.bam.join(MERGED_LIBRARY_FILTER_BAM.out.flagstat, by: [0]),
-        // ch_chrom_sizes
-        ch_merged_library_filter_bam.join(ch_merged_library_filter_flagstat, by: [0]),
-        ch_chrom_sizes
-    )
-    ch_versions = ch_versions.mix(MERGED_LIBRARY_BAM_TO_BIGWIG.out.versions)
+    ch_merged_library_bigwig = channel.empty()
+    if (params.bigwig_method == 'deeptools') {
+        ch_merged_library_filter_bam
+            .join(ch_merged_library_filter_bai, by: [0], remainder: true)
+            .join(ch_merged_library_filter_csi, by: [0], remainder: true)
+            .map {
+                meta, bam, bai, csi ->
+                    def signal_bam = bam instanceof List ? bam[0] : bam
+                    def signal_bai = bai instanceof List ? bai[0] : bai
+                    def signal_csi = csi instanceof List ? csi[0] : csi
+                    [ meta, signal_bam, signal_bai ?: signal_csi ]
+            }
+            .set { ch_merged_library_bam_bai_for_bigwig }
+
+        MERGED_LIBRARY_DEEPTOOLS_BAMCOVERAGE (
+            ch_merged_library_bam_bai_for_bigwig,
+            ch_macs_gsize,
+            params.bamcoverage_normalization,
+            params.bamcoverage_binsize,
+            params.bamcoverage_smoothlength,
+            params.fragment_size
+        )
+        ch_merged_library_bigwig = MERGED_LIBRARY_DEEPTOOLS_BAMCOVERAGE.out.bigwig
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_DEEPTOOLS_BAMCOVERAGE.out.versions)
+    } else {
+        MERGED_LIBRARY_BAM_TO_BIGWIG (
+            // MERGED_LIBRARY_FILTER_BAM.out.bam.join(MERGED_LIBRARY_FILTER_BAM.out.flagstat, by: [0]),
+            // ch_chrom_sizes
+            ch_merged_library_filter_bam.join(ch_merged_library_filter_flagstat, by: [0]),
+            ch_chrom_sizes
+        )
+        ch_merged_library_bigwig = MERGED_LIBRARY_BAM_TO_BIGWIG.out.bigwig
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_BAM_TO_BIGWIG.out.versions)
+    }
 
     //
     // SUBWORKFLOW: Plot coverage across annotation with deepTools
@@ -395,7 +426,7 @@ workflow ATACSEQ {
     ch_deeptoolsplotprofile_multiqc = channel.empty()
     if (!params.skip_plot_profile) {
         MERGED_LIBRARY_BIGWIG_PLOT_DEEPTOOLS (
-            MERGED_LIBRARY_BAM_TO_BIGWIG.out.bigwig,
+            ch_merged_library_bigwig,
             ch_gene_bed,
             ch_tss_bed
         )
@@ -464,6 +495,24 @@ workflow ATACSEQ {
             .set { ch_bam_library }
     }
 
+    ch_bam_bai
+        .map { meta, bam, bai ->
+            def signal_bam = bam instanceof List ? bam[0] : bam
+            def signal_bai = bai instanceof List ? bai[0] : bai
+            [ meta, signal_bam, signal_bai ]
+        }
+        .collect(flat: false)
+        .filter { rows -> rows.size() > 0 }
+        .map { rows ->
+            def sorted = rows.sort { a, b -> a[0].id <=> b[0].id }
+            [
+                sorted.collect { it[0].id },
+                sorted.collect { it[1] },
+                sorted.collect { it[2] }
+            ]
+        }
+        .set { ch_multicov_bams }
+
     //
     // SUBWORKFLOW: Call peaks with MACS3, annotate with HOMER and perform downstream QC
     //
@@ -490,6 +539,7 @@ workflow ATACSEQ {
     ch_deseq2_pca_library_multiqc        = channel.empty()
     ch_deseq2_clustering_library_multiqc = channel.empty()
     ch_tobias_bindetect_multiqc          = channel.empty()
+    ch_rose_super_enhancer_counts        = channel.empty()
     if (!params.skip_consensus_peaks) {
         MERGED_LIBRARY_CONSENSUS_PEAKS (
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
@@ -507,6 +557,29 @@ workflow ATACSEQ {
         ch_deseq2_pca_library_multiqc        = MERGED_LIBRARY_CONSENSUS_PEAKS.out.deseq2_qc_pca_multiqc
         ch_deseq2_clustering_library_multiqc = MERGED_LIBRARY_CONSENSUS_PEAKS.out.deseq2_qc_dists_multiqc
         ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS.out.versions)
+
+        MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS (
+            ch_macs3_consensus_library_bed
+                .combine(ch_multicov_bams)
+                .map { meta, bed, sample_names, bams, bais -> [ meta, bed, sample_names, bams, bais ] }
+        )
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS.out.versions)
+    }
+
+    //
+    // SUBWORKFLOW: ROSE super-enhancers
+    //
+    if (params.run_rose) {
+        MERGED_LIBRARY_SUPERENHANCER_ROSE (
+            MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
+            ch_bam_bai,
+            ch_gtf,
+            ch_multicov_bams,
+            params.rose_stitch,
+            params.rose_tss
+        )
+        ch_rose_super_enhancer_counts = MERGED_LIBRARY_SUPERENHANCER_ROSE.out.raw_counts
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_SUPERENHANCER_ROSE.out.versions)
     }
 
     //
@@ -654,12 +727,37 @@ workflow ATACSEQ {
             //
             // SUBWORKFLOW: Normalised bigWig coverage tracks
             //
-            MERGED_REPLICATE_BAM_TO_BIGWIG (
-                ch_merged_replicate_markduplicate_bam.join(ch_merged_replicate_markduplicate_flagstat, by: [0]),
-                ch_chrom_sizes
-            )
-            ch_ucsc_bedgraphtobigwig_replicate_bigwig = MERGED_REPLICATE_BAM_TO_BIGWIG.out.bigwig
-            ch_versions = ch_versions.mix(MERGED_REPLICATE_BAM_TO_BIGWIG.out.versions)
+            if (params.bigwig_method == 'deeptools') {
+                ch_merged_replicate_markduplicate_bam
+                    .join(ch_merged_replicate_markduplicate_bai, by: [0], remainder: true)
+                    .join(ch_merged_replicate_markduplicate_csi, by: [0], remainder: true)
+                    .map {
+                        meta, bam, bai, csi ->
+                            def signal_bam = bam instanceof List ? bam[0] : bam
+                            def signal_bai = bai instanceof List ? bai[0] : bai
+                            def signal_csi = csi instanceof List ? csi[0] : csi
+                            [ meta, signal_bam, signal_bai ?: signal_csi ]
+                    }
+                    .set { ch_merged_replicate_bam_bai_for_bigwig }
+
+                MERGED_REPLICATE_DEEPTOOLS_BAMCOVERAGE (
+                    ch_merged_replicate_bam_bai_for_bigwig,
+                    ch_macs_gsize,
+                    params.bamcoverage_normalization,
+                    params.bamcoverage_binsize,
+                    params.bamcoverage_smoothlength,
+                    params.fragment_size
+                )
+                ch_ucsc_bedgraphtobigwig_replicate_bigwig = MERGED_REPLICATE_DEEPTOOLS_BAMCOVERAGE.out.bigwig
+                ch_versions = ch_versions.mix(MERGED_REPLICATE_DEEPTOOLS_BAMCOVERAGE.out.versions)
+            } else {
+                MERGED_REPLICATE_BAM_TO_BIGWIG (
+                    ch_merged_replicate_markduplicate_bam.join(ch_merged_replicate_markduplicate_flagstat, by: [0]),
+                    ch_chrom_sizes
+                )
+                ch_ucsc_bedgraphtobigwig_replicate_bigwig = MERGED_REPLICATE_BAM_TO_BIGWIG.out.bigwig
+                ch_versions = ch_versions.mix(MERGED_REPLICATE_BAM_TO_BIGWIG.out.versions)
+            }
         }
         // Create channels: [ meta, bam, ([] for control_bam) ]
         if (params.with_control) {
@@ -739,7 +837,7 @@ workflow ATACSEQ {
         IGV (
             ch_fasta,
             ch_fai,
-            MERGED_LIBRARY_BAM_TO_BIGWIG.out.bigwig.collect { item -> item[1] }.ifEmpty([]),
+            ch_merged_library_bigwig.collect { item -> item[1] }.ifEmpty([]),
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks.collect { item -> item[1] }.ifEmpty([]),
             ch_macs3_consensus_library_bed.collect { item -> item[1] }.ifEmpty([]),
             ch_ucsc_bedgraphtobigwig_replicate_bigwig.collect { item -> item[1] }.ifEmpty([]),

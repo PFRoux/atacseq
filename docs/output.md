@@ -146,7 +146,7 @@ The [Preseq](http://smithlabresearch.org/software/preseq/) package is aimed at p
 <summary>Output files</summary>
 
 - `<ALIGNER>/merged_library/bigwig/`
-  - `*.bigWig`: Normalised bigWig files scaled to 1 million mapped reads.
+  - `*.bigWig`: Normalised bigWig files. By default these are generated with BEDTools / bedGraphToBigWig and scaled to 1 million mapped reads. If `--bigwig_method deeptools` is set, they are generated with deepTools `bamCoverage` using `--bamcoverage_normalization`.
 
 </details>
 
@@ -210,6 +210,7 @@ Various QC plots per sample including number of peaks, fold-change distribution,
   - `*.bed`: Consensus peak-set across all samples in BED format.
   - `*.saf`: Consensus peak-set across all samples in SAF format. Required by featureCounts for read quantification.
   - `*.featureCounts.txt`: Read counts across all samples relative to consensus peak-set.
+  - `counts/*.raw_counts.tsv`: Raw `bedtools multicov` read counts across all samples relative to the consensus peak-set.
   - `*.annotatePeaks.txt`: HOMER peak-to-gene annotation file for consensus peaks.
   - `*.boolean.annotatePeaks.txt`: Spreadsheet representation of consensus peak-set across samples **with** gene annotation columns. The columns from individual peak files are included in this file along with the ability to filter peaks based on their presence or absence in multiple replicates/conditions.
   - `*.boolean.txt`: Spreadsheet representation of consensus peak-set across samples **without** gene annotation columns. Same as file above but without annotation columns.
@@ -259,6 +260,29 @@ By default, the pipeline uses the `vst` transformation which is more suited to l
 ![MultiQC - DESeq2 PCA plot](images/mqc_deseq2_pca_plot.png)
 
 <p align="center"><img src="images/mqc_deseq2_sample_similarity_plot.png" alt="MultiQC - DESeq2 sample similarity plot" width="600"></p>
+
+### Super-enhancers
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/rose/annotation/`
+  - `rose_refseq.ucsc`: ROSE-compatible annotation generated from the input GTF or GFF-derived GTF.
+- `<ALIGNER>/merged_library/rose/<SAMPLE>/`
+  - `*_SuperStitched.table.txt`: Ranked super-enhancers above the ROSE cutoff.
+  - `*_AllStitched.table.txt`: All stitched enhancers ranked by signal.
+  - `*_Stitched_withSuper.bed`: Stitched enhancer BED with super-enhancer status.
+  - `*_SuperStitched.table_withGENES.txt`: Super-enhancer table with ROSE gene mapping.
+  - `*_Plot_points.png`: ROSE rank-order plot.
+- `<ALIGNER>/merged_library/rose/consensus/`
+  - `consensus_super_enhancers.bed`: Merged consensus super-enhancer intervals across samples.
+  - `consensus_super_enhancers.saf`: SAF annotation for consensus super-enhancer counting.
+- `<ALIGNER>/merged_library/rose/consensus/counts/`
+  - `consensus_super_enhancers.mLb.clN.raw_counts.tsv`: Raw read counts over consensus super-enhancers generated with `bedtools multicov`.
+
+</details>
+
+If `--run_rose` is specified, the pipeline runs [ROSE](https://github.com/stjude/ROSE) on merged library-level filtered BAM files and MACS3 peak calls. The ROSE annotation table is generated from the same GTF or GFF-derived GTF used by the pipeline, avoiding genome-label annotation mismatches between the alignments, peaks and ROSE TSS exclusion step. Per-sample ROSE super-enhancer tables are then merged into a consensus super-enhancer BED, and raw counts are generated over the consensus set.
 
 ### Motif footprinting
 

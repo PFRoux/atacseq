@@ -1,0 +1,82 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "rose"
+description: Rank Ordering of Super-Enhancers from ATAC-seq peaks and signal
+keywords:
+  - atac-seq
+  - enhancer
+  - rose
+  - super-enhancer
+tools:
+  - rose:
+      description: "Rank Ordering of Super-Enhancers using the St. Jude Python 3-compatible fork"
+      homepage: "https://github.com/stjude/ROSE"
+      documentation: "https://github.com/stjude/ROSE"
+      tool_dev_url: "https://github.com/stjude/ROSE"
+      doi: "10.1016/j.cell.2013.03.035"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - peaks:
+      type: file
+      description: Constituent enhancer peaks in BED, narrowPeak or broadPeak format
+      pattern: "*.{bed,narrowPeak,broadPeak}"
+  - bam:
+      type: file
+      description: Filtered ATAC-seq BAM used to rank enhancers
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.bai"
+  - annotation:
+      type: file
+      description: ROSE-compatible UCSC/refSeq-like annotation table generated from the pipeline GTF
+      pattern: "*.ucsc"
+  - stitch:
+      type: integer
+      description: Stitching distance in bp
+  - tss_exclusion:
+      type: integer
+      description: TSS exclusion zone in bp
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - super_enhancers:
+      type: file
+      description: Ranked super-enhancer table above the ROSE cutoff
+      pattern: "*_SuperStitched.table.txt"
+  - all_enhancers:
+      type: file
+      description: All stitched enhancers with signal ranking and super-enhancer status
+      pattern: "*_AllStitched.table.txt"
+  - enhancers_bed:
+      type: file
+      description: BED file of stitched enhancers flagged by ROSE
+      pattern: "*_Stitched_withSuper.bed"
+  - super_genes:
+      type: file
+      description: Super-enhancer table with nearby genes assigned by ROSE
+      pattern: "*_SuperStitched.table_withGENES.txt"
+  - plot:
+      type: file
+      description: ROSE rank-order plot
+      pattern: "*_Plot_points.png"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

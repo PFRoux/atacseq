@@ -188,6 +188,18 @@ def validateInputParameters() {
     if (params.run_footprinting && params.skip_consensus_peaks) {
         error("TOBIAS footprinting requires consensus peaks. Please disable '--skip_consensus_peaks' or disable '--run_footprinting'.")
     }
+
+    if (params.run_rose && !params.gtf && !params.gff) {
+        error("ROSE super-enhancer calling requires a gene annotation. Please provide '--gtf' or '--gff', or disable '--run_rose'.")
+    }
+
+    if (!['bedtools', 'deeptools'].contains(params.bigwig_method)) {
+        error("Invalid --bigwig_method '${params.bigwig_method}'. Please use 'bedtools' or 'deeptools'.")
+    }
+
+    if (!['RPKM', 'CPM', 'BPM', 'RPGC', 'None'].contains(params.bamcoverage_normalization)) {
+        error("Invalid --bamcoverage_normalization '${params.bamcoverage_normalization}'. Please use one of: RPKM, CPM, BPM, RPGC, None.")
+    }
 }
 
 //

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Enhancements & fixes
 
 - Add optional TOBIAS footprinting for merged library-level filtered BAM files.
+- Add optional ROSE super-enhancer calling for merged library-level filtered BAM files and MACS3 peaks.
+- Add raw `bedtools multicov` count matrices for merged library-level consensus peaks and ROSE consensus super-enhancers.
+- Add optional deepTools `bamCoverage` bigWig generation via `--bigwig_method deeptools`, including configurable `--bamcoverage_normalization`, bin size and smoothing.
 - [[#446]](https://github.com/nf-core/atacseq/pull/446) - Make pipeline code compliant with strict Nextflow v2 syntax parser, with no behaviour change.
 - [[#407]](https://github.com/nf-core/atacseq/pull/407) to add filtering reads according fragment size to help to focus on NFR, MNR, DNR, TNR
 - [[#164]](https://github.com/nf-core/atacseq/issues/164) and partly [[#91]](https://github.com/nf-core/atacseq/issues/91) with code from [[#301]](https://github.com/nf-core/atacseq/pull/301) to address shifting of reads as an option that is turned off by default.
@@ -37,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--skip_merged_replicate_bigwig` |
 |               | `--run_footprinting`             |
 |               | `--tobias_motifs`                |
+|               | `--run_rose`                     |
+|               | `--rose_stitch`                  |
+|               | `--rose_tss`                     |
 
 > **NB:** Parameter has been **updated** if both old and new parameter information is present.
 > **NB:** Parameter has been **added** if just the new parameter information is present.
@@ -50,6 +56,7 @@ Note, since the pipeline is now using Nextflow DSL2, each process will be run wi
 | ---------- | ----------- | ----------- |
 | `macs2`    | 2.2.7.1     |             |
 | `macs3`    |             | 3.0.1       |
+| `rose`     |             | 1.3.2       |
 | `tobias`   |             | 0.16.1      |
 
 ## [[2.1.2](https://github.com/nf-core/atacseq/releases/tag/2.1.2)] - 2022-08-07

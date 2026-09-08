@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "bam_footprint_tobias"
+description: Correct ATAC-seq signal for Tn5 bias, score footprints and run TOBIAS BINDetect across samples
+keywords:
+  - atac-seq
+  - footprinting
+  - tobias
+  - transcription factors
+components:
+  - tobias/atacorrect
+  - tobias/scorebigwig
+  - tobias/bindetect
+input:
+  - ch_bam_bai:
+      type: file
+      description: |
+        Channel containing merged library-level BAM files and indexes.
+        Structure: [ val(meta), path(bam), path(bai) ]
+  - ch_consensus_bed:
+      type: file
+      description: |
+        Channel containing the merged library-level consensus peak BED file.
+        Structure: [ val(meta), path(bed) ]
+  - ch_fasta:
+      type: file
+      description: Reference genome FASTA file
+  - ch_motifs:
+      type: file
+      description: Motif file supplied to TOBIAS BINDetect
+output:
+  - corrected:
+      type: file
+      description: Bias-corrected TOBIAS ATACorrect bigWig files
+  - expected:
+      type: file
+      description: Expected signal TOBIAS ATACorrect bigWig files
+  - footprints:
+      type: file
+      description: TOBIAS ScoreBigwig footprint score bigWig files
+  - outdir:
+      type: directory
+      description: TOBIAS BINDetect output directory
+  - versions:
+      type: file
+      description: Files containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

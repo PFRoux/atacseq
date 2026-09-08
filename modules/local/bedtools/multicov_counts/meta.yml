@@ -1,0 +1,60 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "bedtools_multicov_counts"
+description: Count reads from multiple BAM files over a BED region set using bedtools multicov
+keywords:
+  - atac-seq
+  - bam
+  - bed
+  - counts
+  - bedtools
+tools:
+  - bedtools:
+      description: "A powerful toolset for genome arithmetic"
+      homepage: "https://bedtools.readthedocs.io"
+      documentation: "https://bedtools.readthedocs.io"
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["MIT"]
+      identifier: "biotools:bedtools"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing count matrix information
+        e.g. `[ id:'consensus_peaks' ]`
+  - regions:
+      type: file
+      description: BED file containing regions to count
+      pattern: "*.bed"
+  - sample_names:
+      type: list
+      description: Ordered list of sample names corresponding to BAM files
+  - bams:
+      type: file
+      description: Coordinate-sorted BAM files
+      pattern: "*.bam"
+  - bais:
+      type: file
+      description: BAM index files
+      pattern: "*.bai"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing count matrix information
+        e.g. `[ id:'consensus_peaks' ]`
+  - counts:
+      type: file
+      description: Raw count matrix
+      pattern: "*.raw_counts.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

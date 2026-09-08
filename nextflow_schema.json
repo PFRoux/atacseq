@@ -409,6 +409,70 @@
                 }
             }
         },
+        "superenhancer_options": {
+            "title": "Super-enhancer options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Options for optional ROSE super-enhancer calling.",
+            "properties": {
+                "run_rose": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run ROSE on merged library-level filtered BAM files and MACS3 peaks.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "rose_stitch": {
+                    "type": "integer",
+                    "default": 12500,
+                    "description": "ROSE enhancer stitching distance in bp.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "rose_tss": {
+                    "type": "integer",
+                    "default": 2500,
+                    "description": "ROSE TSS exclusion distance in bp.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                }
+            }
+        },
+        "bigwig_options": {
+            "title": "bigWig options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Options controlling normalized bigWig coverage track generation.",
+            "properties": {
+                "bigwig_method": {
+                    "type": "string",
+                    "default": "bedtools",
+                    "enum": ["bedtools", "deeptools"],
+                    "description": "Method used to generate normalized bigWig coverage tracks.",
+                    "help_text": "The default 'bedtools' mode keeps the nf-core/atacseq behaviour using BEDTools genomecov and bedGraphToBigWig with coverage scaled to 1 million mapped reads. The 'deeptools' mode uses deepTools bamCoverage and enables selection of the --normalizeUsing method.",
+                    "fa_icon": "fas fa-chart-area"
+                },
+                "bamcoverage_normalization": {
+                    "type": "string",
+                    "default": "CPM",
+                    "enum": ["RPKM", "CPM", "BPM", "RPGC", "None"],
+                    "description": "deepTools bamCoverage normalization method used when --bigwig_method deeptools.",
+                    "help_text": "Passed to bamCoverage as --normalizeUsing. RPGC requires an effective genome size from --macs_gsize or the selected iGenomes reference.",
+                    "fa_icon": "fas fa-divide"
+                },
+                "bamcoverage_binsize": {
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1,
+                    "description": "Bin size in bp for deepTools bamCoverage bigWig generation.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "bamcoverage_smoothlength": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Smoothing window length in bp for deepTools bamCoverage. A value of 0 disables smoothing.",
+                    "fa_icon": "fas fa-wave-square"
+                }
+            }
+        },
         "footprinting_options": {
             "title": "Footprinting options",
             "type": "object",
@@ -684,6 +748,12 @@
         },
         {
             "$ref": "#/$defs/peak_calling_options"
+        },
+        {
+            "$ref": "#/$defs/superenhancer_options"
+        },
+        {
+            "$ref": "#/$defs/bigwig_options"
         },
         {
             "$ref": "#/$defs/footprinting_options"
