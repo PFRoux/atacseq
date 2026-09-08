@@ -30,6 +30,7 @@ include { BAM_PEAKS_CALL_QC_ANNOTATE_MACS3_HOMER as MERGED_LIBRARY_CALL_ANNOTATE
 include { BAM_PEAKS_CALL_QC_ANNOTATE_MACS3_HOMER as MERGED_REPLICATE_CALL_ANNOTATE_PEAKS } from '../subworkflows/local/bam_peaks_call_qc_annotate_macs3_homer.nf'
 include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_LIBRARY_CONSENSUS_PEAKS   } from '../subworkflows/local/bed_consensus_quantify_qc_bedtools_featurecounts_deseq2.nf'
 include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_REPLICATE_CONSENSUS_PEAKS } from '../subworkflows/local/bed_consensus_quantify_qc_bedtools_featurecounts_deseq2.nf'
+include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../subworkflows/local/bam_footprint_tobias'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,6 +107,7 @@ workflow ATACSEQ {
     ch_multiqc_merged_replicate_peak_annotation_header   = file("$projectDir/assets/multiqc/merged_replicate_peak_annotation_header.txt", checkIfExists: true)
     ch_multiqc_merged_replicate_deseq2_pca_header        = file("$projectDir/assets/multiqc/merged_replicate_deseq2_pca_header.txt", checkIfExists: true)
     ch_multiqc_merged_replicate_deseq2_clustering_header = file("$projectDir/assets/multiqc/merged_replicate_deseq2_clustering_header.txt", checkIfExists: true)
+    ch_tobias_motifs                                     = params.tobias_motifs ? channel.fromPath(params.tobias_motifs, checkIfExists: true) : channel.empty()
 
     // Check ataqv_mito_reference parameter
     ataqv_mito_reference = params.ataqv_mito_reference
@@ -487,6 +489,7 @@ workflow ATACSEQ {
     ch_featurecounts_library_multiqc     = channel.empty()
     ch_deseq2_pca_library_multiqc        = channel.empty()
     ch_deseq2_clustering_library_multiqc = channel.empty()
+    ch_tobias_bindetect_multiqc          = channel.empty()
     if (!params.skip_consensus_peaks) {
         MERGED_LIBRARY_CONSENSUS_PEAKS (
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
@@ -504,6 +507,20 @@ workflow ATACSEQ {
         ch_deseq2_pca_library_multiqc        = MERGED_LIBRARY_CONSENSUS_PEAKS.out.deseq2_qc_pca_multiqc
         ch_deseq2_clustering_library_multiqc = MERGED_LIBRARY_CONSENSUS_PEAKS.out.deseq2_qc_dists_multiqc
         ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS.out.versions)
+    }
+
+    //
+    // SUBWORKFLOW: TOBIAS footprinting
+    //
+    if (params.run_footprinting) {
+        MERGED_LIBRARY_FOOTPRINT_TOBIAS (
+            ch_bam_bai,
+            ch_macs3_consensus_library_bed,
+            ch_fasta,
+            ch_tobias_motifs
+        )
+        ch_tobias_bindetect_multiqc = MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.outdir
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.versions)
     }
 
     // Create channels: [ meta, bam, bai, peak_file ]
@@ -827,6 +844,7 @@ workflow ATACSEQ {
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peak_count_multiqc.collect { item -> item[1] }.ifEmpty([]),
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.plot_homer_annotatepeaks_tsv.collect().ifEmpty([]),
             ch_featurecounts_library_multiqc.collect { item -> item[1] }.ifEmpty([]),
+            ch_tobias_bindetect_multiqc.collect { item -> item[1] }.ifEmpty([]),
 
             ch_markduplicates_replicate_stats.collect { item -> item[1] }.ifEmpty([]),
             ch_markduplicates_replicate_flagstat.collect { item -> item[1] }.ifEmpty([]),

@@ -180,6 +180,14 @@ def validateInputParameters() {
     if (!params.read_length && !params.macs_gsize) {
         error ("Both '--read_length' and '--macs_gsize' not specified! Please specify either to infer MACS3 genome size for peak calling.")
     }
+
+    if (params.run_footprinting && !params.tobias_motifs) {
+        error("TOBIAS footprinting requires a motif file. Please provide one with '--tobias_motifs motifs.jaspar'.")
+    }
+
+    if (params.run_footprinting && params.skip_consensus_peaks) {
+        error("TOBIAS footprinting requires consensus peaks. Please disable '--skip_consensus_peaks' or disable '--run_footprinting'.")
+    }
 }
 
 //

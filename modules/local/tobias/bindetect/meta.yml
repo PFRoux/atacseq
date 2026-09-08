@@ -1,0 +1,62 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "tobias_bindetect"
+description: Compare footprint scores across samples and detect differential transcription factor binding
+keywords:
+  - atac-seq
+  - footprinting
+  - transcription factors
+  - motifs
+tools:
+  - tobias:
+      description: "Transcription factor footprinting from ATAC-seq data"
+      homepage: "https://github.com/loosolab/TOBIAS"
+      documentation: "https://github.com/loosolab/TOBIAS/wiki"
+      tool_dev_url: "https://github.com/loosolab/TOBIAS"
+      doi: "10.1038/s41467-020-18035-1"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing run-level information
+        e.g. `[ id:'all_samples' ]`
+  - footprints:
+      type: file
+      description: Footprint score bigWig files produced by TOBIAS ScoreBigwig
+      pattern: "*_footprints.bw"
+  - cond_names:
+      type: string
+      description: Space-separated condition or sample names passed to TOBIAS BINDetect
+  - motifs:
+      type: file
+      description: Motif file, for example in JASPAR format
+  - fasta:
+      type: file
+      description: Reference genome FASTA file
+      pattern: "*.fa"
+  - peaks:
+      type: file
+      description: BED file containing regions used for BINDetect
+      pattern: "*.bed"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing run-level information
+        e.g. `[ id:'all_samples' ]`
+  - outdir:
+      type: directory
+      description: TOBIAS BINDetect output directory
+      pattern: "bindetect"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

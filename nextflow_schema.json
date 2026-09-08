@@ -409,6 +409,28 @@
                 }
             }
         },
+        "footprinting_options": {
+            "title": "Footprinting options",
+            "type": "object",
+            "fa_icon": "fas fa-shoe-prints",
+            "description": "Options for optional transcription factor footprinting analysis.",
+            "properties": {
+                "run_footprinting": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run TOBIAS footprinting on merged library-level filtered BAM files using the merged library consensus peak set.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "tobias_motifs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Motif file supplied to TOBIAS BINDetect, for example in JASPAR format.",
+                    "fa_icon": "far fa-file-code"
+                }
+            }
+        },
         "deseq_qc_options": {
             "title": "Differential analysis options",
             "type": "object",
@@ -662,6 +684,9 @@
         },
         {
             "$ref": "#/$defs/peak_calling_options"
+        },
+        {
+            "$ref": "#/$defs/footprinting_options"
         },
         {
             "$ref": "#/$defs/deseq_qc_options"

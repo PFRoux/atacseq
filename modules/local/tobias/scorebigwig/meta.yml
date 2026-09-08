@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "tobias_scorebigwig"
+description: Calculate ATAC-seq footprint scores from bias-corrected signal tracks
+keywords:
+  - atac-seq
+  - footprinting
+  - bigwig
+tools:
+  - tobias:
+      description: "Transcription factor footprinting from ATAC-seq data"
+      homepage: "https://github.com/loosolab/TOBIAS"
+      documentation: "https://github.com/loosolab/TOBIAS/wiki"
+      tool_dev_url: "https://github.com/loosolab/TOBIAS"
+      doi: "10.1038/s41467-020-18035-1"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - corrected:
+      type: file
+      description: Bias-corrected bigWig produced by TOBIAS ATACorrect
+      pattern: "*_corrected.bw"
+  - peaks:
+      type: file
+      description: BED file containing regions scored for footprints
+      pattern: "*.bed"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - footprints:
+      type: file
+      description: Footprint score bigWig
+      pattern: "*_footprints.bw"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "tobias_atacorrect"
+description: Correct ATAC-seq signal for Tn5 sequence bias using TOBIAS ATACorrect
+keywords:
+  - atac-seq
+  - footprinting
+  - tn5
+  - bigwig
+tools:
+  - tobias:
+      description: "Transcription factor footprinting from ATAC-seq data"
+      homepage: "https://github.com/loosolab/TOBIAS"
+      documentation: "https://github.com/loosolab/TOBIAS/wiki"
+      tool_dev_url: "https://github.com/loosolab/TOBIAS"
+      doi: "10.1038/s41467-020-18035-1"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - bam:
+      type: file
+      description: Coordinate-sorted BAM file
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.bai"
+  - peaks:
+      type: file
+      description: BED file containing regions used for correction
+      pattern: "*.bed"
+  - fasta:
+      type: file
+      description: Reference genome FASTA file
+      pattern: "*.fa"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - corrected:
+      type: file
+      description: Bias-corrected ATAC-seq signal track
+      pattern: "*_corrected.bw"
+  - expected:
+      type: file
+      description: Expected signal track estimated by TOBIAS
+      pattern: "*_expected.bw"
+  - uncorrected:
+      type: file
+      description: Optional uncorrected signal track
+      pattern: "*_uncorrected.bw"
+  - bias:
+      type: file
+      description: Optional Tn5 bias track
+      pattern: "*_bias.bw"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

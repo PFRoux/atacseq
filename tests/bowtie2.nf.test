@@ -55,4 +55,27 @@ nextflow_pipeline {
             )
         }
     }
+
+    test("bowtie2 with TOBIAS footprinting stub") {
+
+        options "-stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                aligner = "bowtie2"
+                run_footprinting = true
+                tobias_motifs = "$projectDir/tests/data/tobias_motifs.jaspar"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.trace.succeeded().size()
+                ).match() }
+            )
+        }
+    }
 }
