@@ -5,6 +5,7 @@
 // Produces a shared analysis-ready BAM consumed by CNV / telomere / mito branches.
 //
 include { BWA_MEM                    } from '../../../modules/nf-core/bwa/mem/main'
+include { PICARD_MERGESAMFILES as PICARD_MERGESAMFILES_VARIANT } from '../../../modules/nf-core/picard/mergesamfiles/main'
 include { GATK4_MARKDUPLICATES       } from '../../../modules/nf-core/gatk4/markduplicates/main'
 include { GATK4_BASERECALIBRATOR     } from '../../../modules/nf-core/gatk4/baserecalibrator/main'
 include { GATK4_APPLYBQSR            } from '../../../modules/nf-core/gatk4/applybqsr/main'
@@ -55,8 +56,28 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     // Align with BWA-MEM (sort_bam = true)
     //
     BWA_MEM ( ch_reads, ch_bwa_index, ch_fasta, true )
-    INDEX_BWA ( BWA_MEM.out.bam )
-    ch_bwa_bam = BWA_MEM.out.bam
+    ch_versions = ch_versions.mix(BWA_MEM.out.versions.first())
+
+    BWA_MEM.out.bam
+        .map { meta, bam ->
+            def meta_clone = meta.clone()
+            meta_clone.remove('read_group')
+            meta_clone.id = meta_clone.id - ~/_T\d+$/
+            [ meta_clone, bam ]
+        }
+        .groupTuple(by: [0])
+        .map { meta, bams ->
+            [ meta, bams.flatten() ]
+        }
+        .set { ch_bwa_bams_to_merge }
+
+    PICARD_MERGESAMFILES_VARIANT ( ch_bwa_bams_to_merge )
+    ch_versions = ch_versions.mix(PICARD_MERGESAMFILES_VARIANT.out.versions.first())
+
+    INDEX_BWA ( PICARD_MERGESAMFILES_VARIANT.out.bam )
+    ch_versions = ch_versions.mix(INDEX_BWA.out.versions.first())
+
+    ch_bwa_bam = PICARD_MERGESAMFILES_VARIANT.out.bam
         .join(INDEX_BWA.out.bai, by: [0], remainder: true)
         .join(INDEX_BWA.out.csi, by: [0], remainder: true)
         .map { meta, bam, bai, csi ->
@@ -69,6 +90,11 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
         ch_bwa_bam,
         ch_fasta
     )
+    ch_versions = ch_versions.mix(
+        SAMTOOLS_FLAGSTAT_BWA.out.versions.first(),
+        SAMTOOLS_IDXSTATS_BWA.out.versions.first(),
+        SAMTOOLS_STATS_BWA.out.versions.first()
+    )
     ch_multiqc_files = ch_multiqc_files.mix(
         SAMTOOLS_FLAGSTAT_BWA.out.flagstat.map { meta, flagstat -> flagstat },
         SAMTOOLS_IDXSTATS_BWA.out.idxstats.map { meta, idxstats -> idxstats },
@@ -79,11 +105,12 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     // GATK4 MarkDuplicates
     //
     GATK4_MARKDUPLICATES (
-        BWA_MEM.out.bam,
+        PICARD_MERGESAMFILES_VARIANT.out.bam,
         ch_fasta.map { m, f -> f },
         ch_fai.map   { m, f -> f }
     )
     INDEX_MARKDUP ( GATK4_MARKDUPLICATES.out.bam )
+    ch_versions = ch_versions.mix(INDEX_MARKDUP.out.versions.first())
     ch_markdup_bam = GATK4_MARKDUPLICATES.out.bam
         .join(INDEX_MARKDUP.out.bai, by: [0], remainder: true)
         .join(INDEX_MARKDUP.out.csi, by: [0], remainder: true)

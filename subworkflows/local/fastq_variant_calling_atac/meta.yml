@@ -8,6 +8,7 @@ keywords:
   - gatk
 components:
   - bwa/mem
+  - picard/mergesamfiles
   - gatk4/markduplicates
   - gatk4/baserecalibrator
   - gatk4/applybqsr
