@@ -342,6 +342,26 @@ If `--run_chromvar` is specified, the pipeline runs [chromVAR](https://greenleaf
 
 If `--run_nucleoatac` is specified, the pipeline runs [NucleoATAC](https://nucleoatac.readthedocs.io/en/latest/) on filtered merged library-level BAM files. The analysis uses the merged library consensus peak set as the open-chromatin search space. The regions can be widened with `--nucleoatac_region_slop` and are sorted and merged before running NucleoATAC so that overlapping windows are not passed to the tool.
 
+### Copy-number calling
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/cnv/regions/`
+  - `consensus_peaks.qdnaseq_excluded.slop<N>.bed`: Consensus peak regions excluded from QDNAseq when `--qdnaseq_filter_peaks` is enabled.
+- `<ALIGNER>/merged_library/cnv/outside_peaks_bam/<SAMPLE>/`
+  - `*.outside_peaks.bam`, `*.outside_peaks.bam.bai`: BAM and index after removing reads that overlap consensus peaks.
+- `<ALIGNER>/merged_library/cnv/qdnaseq/<SAMPLE>/`
+  - `*.qdnaseq.rds`: QDNAseq object after read counting, correction, normalization, segmentation and calling.
+  - `*.qdnaseq.bins.tsv`: Per-bin QDNAseq table.
+  - `*.qdnaseq.segments.tsv`: Segmented copy-number table when available.
+  - `*.qdnaseq.calls.tsv`: Per-bin copy-number calls when available.
+  - `*.qdnaseq.pdf`: QDNAseq diagnostic plots.
+
+</details>
+
+If `--run_cnv` is specified, the pipeline runs [QDNAseq](https://bioconductor.org/packages/QDNAseq/) on the genetic-layer merged library BAM files. A QDNAseq bins RDS file matching the reference genome and selected bin size must be supplied with `--qdnaseq_bins_rds`. By default, reads overlapping merged library consensus peaks widened by `--qdnaseq_peak_slop` are removed before QDNAseq so that copy-number estimates are driven by background chromatin rather than highly accessible ATAC-seq peaks. This behaviour can be disabled with `--qdnaseq_filter_peaks false`.
+
 ### Telomere content and telomeric variant repeats
 
 <details markdown="1">

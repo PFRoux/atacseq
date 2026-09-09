@@ -1,0 +1,22 @@
+nextflow_pipeline {
+
+    name "Test SAMTOOLS_VIEW_OUTSIDE_REGIONS module harness"
+    script "modules/local/samtools/view_outside_regions/tests/main.nf"
+
+    tag "modules"
+    tag "modules_local"
+    tag "samtools"
+    tag "view"
+
+    test("samtools view outside regions harness - stub") {
+
+        options "-stub"
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().size()).match() }
+            )
+        }
+    }
+}

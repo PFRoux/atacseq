@@ -1,0 +1,60 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "samtools_view_outside_regions"
+description: Keep reads that do not overlap a BED region set from a BAM file
+keywords:
+  - samtools
+  - view
+  - bam
+  - atac-seq
+tools:
+  - samtools:
+      description: Tools for dealing with high-throughput sequencing data
+      homepage: "https://www.htslib.org/"
+      documentation: "https://www.htslib.org/doc/samtools-view.html"
+      doi: "10.1093/bioinformatics/btp352"
+      licence: ["MIT"]
+      identifier: "biotools:samtools"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - bam:
+      type: file
+      description: Coordinate-sorted BAM file
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.{bai,csi}"
+  - regions:
+      type: file
+      description: BED file containing regions to remove
+      pattern: "*.bed"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - bam:
+      type: file
+      description: BAM file containing reads that do not overlap the input regions
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.bam.bai"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

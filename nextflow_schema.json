@@ -575,6 +575,59 @@
                 }
             }
         },
+        "cnv_options": {
+            "title": "CNV options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Options for optional QDNAseq copy-number analysis from merged library-level ATAC-seq BAM files.",
+            "properties": {
+                "run_cnv": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run QDNAseq copy-number analysis on merged library-level filtered BAM files.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "qdnaseq_bins_rds": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "QDNAseq bins RDS file matching the reference genome and desired bin size.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "qdnaseq_binsize": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 1,
+                    "description": "QDNAseq bin size in kb corresponding to --qdnaseq_bins_rds.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "qdnaseq_filter_peaks": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Remove reads overlapping merged library consensus peaks before QDNAseq counting.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "qdnaseq_peak_slop": {
+                    "type": "integer",
+                    "default": 500,
+                    "minimum": 0,
+                    "description": "Number of bp added on each side of consensus peaks before removing peak-overlapping reads for QDNAseq.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "qdnaseq_loss_threshold": {
+                    "type": "number",
+                    "default": -0.4,
+                    "description": "Log2 threshold below which QDNAseq bins are labelled as copy-number losses.",
+                    "fa_icon": "fas fa-arrow-down"
+                },
+                "qdnaseq_gain_threshold": {
+                    "type": "number",
+                    "default": 0.4,
+                    "description": "Log2 threshold above which QDNAseq bins are labelled as copy-number gains.",
+                    "fa_icon": "fas fa-arrow-up"
+                }
+            }
+        },
         "telomerehunter2_options": {
             "title": "TelomereHunter2 options",
             "type": "object",
@@ -982,6 +1035,9 @@
         },
         {
             "$ref": "#/$defs/nucleoatac_options"
+        },
+        {
+            "$ref": "#/$defs/cnv_options"
         },
         {
             "$ref": "#/$defs/telomerehunter2_options"

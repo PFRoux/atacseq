@@ -38,9 +38,12 @@ include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_CO
 include { CHROMVAR as MERGED_LIBRARY_CHROMVAR } from '../modules/local/chromvar'
 include { NUCLEOATAC as MERGED_LIBRARY_NUCLEOATAC } from '../modules/local/nucleoatac'
 include { TELOMEREHUNTER2 as MERGED_LIBRARY_TELOMEREHUNTER2 } from '../modules/local/telomerehunter2'
+include { SAMTOOLS_VIEW_OUTSIDE_REGIONS as CNV_BAM_OUTSIDE_PEAKS } from '../modules/local/samtools/view_outside_regions'
+include { QDNASEQ as MERGED_LIBRARY_QDNASEQ } from '../modules/local/qdnaseq'
 include { FASTQ_VARIANT_CALLING_ATAC } from '../subworkflows/local/fastq_variant_calling_atac'
 include { BED_SLOP as CONSENSUS_PEAKS_BED_SLOP } from '../modules/local/bed_slop'
 include { BED_SLOP as NUCLEOATAC_BED_SLOP } from '../modules/local/bed_slop'
+include { BED_SLOP as CNV_PEAKS_BED_SLOP } from '../modules/local/bed_slop'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -551,10 +554,12 @@ workflow ATACSEQ {
     ch_telomerehunter2_multiqc           = channel.empty()
     ch_rose_super_enhancer_counts        = channel.empty()
     ch_nucleoatac_multiqc                = channel.empty()
+    ch_qdnaseq_multiqc                   = channel.empty()
     ch_variant_vcf_multiqc               = channel.empty()
     ch_variant_alignment_multiqc         = channel.empty()
     ch_variant_oncoplot                  = channel.empty()
     ch_variant_peak_regions              = channel.value([ [:], [] ])
+    ch_cnv_peak_regions                  = channel.value([ [:], [] ])
     if (!params.skip_consensus_peaks) {
         MERGED_LIBRARY_CONSENSUS_PEAKS (
             MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
@@ -638,16 +643,58 @@ workflow ATACSEQ {
             ch_variant_peak_regions = CONSENSUS_PEAKS_BED_SLOP.out.bed
             ch_versions = ch_versions.mix(CONSENSUS_PEAKS_BED_SLOP.out.versions)
         }
+
+        if (params.run_cnv && params.qdnaseq_filter_peaks) {
+            CNV_PEAKS_BED_SLOP (
+                ch_macs3_consensus_library_bed,
+                ch_fai.map { fai -> [ [:], fai ] },
+                params.qdnaseq_peak_slop
+            )
+            ch_cnv_peak_regions = CNV_PEAKS_BED_SLOP.out.bed
+            ch_versions = ch_versions.mix(CNV_PEAKS_BED_SLOP.out.versions)
+        }
     }
 
     //
-    // SUBWORKFLOW: Short variant calling from ATAC-seq reads
+    // SUBWORKFLOW: ROSE super-enhancers
     //
-    if (params.run_variants) {
-        def variant_callers = params.variant_callers
-            .tokenize(',')
-            .collect { it.trim() }
-            .findAll { it }
+    if (params.run_rose) {
+        MERGED_LIBRARY_SUPERENHANCER_ROSE (
+            MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
+            ch_bam_bai,
+            ch_gtf,
+            ch_multicov_bams,
+            params.rose_stitch,
+            params.rose_tss
+        )
+        ch_rose_super_enhancer_counts = MERGED_LIBRARY_SUPERENHANCER_ROSE.out.raw_counts
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_SUPERENHANCER_ROSE.out.versions)
+    }
+
+    //
+    // SUBWORKFLOW: TOBIAS footprinting
+    //
+    if (params.run_footprinting) {
+        MERGED_LIBRARY_FOOTPRINT_TOBIAS (
+            ch_bam_bai,
+            ch_macs3_consensus_library_bed,
+            ch_fasta,
+            ch_tobias_motifs
+        )
+        ch_tobias_bindetect_multiqc = MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.outdir
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.versions)
+    }
+
+    //
+    // GENETIC LAYER: BWA/GATK preprocessing, short variants and copy-number calling
+    //
+    if (params.run_variants || params.run_cnv) {
+        def variant_callers = params.run_variants ?
+            params.variant_callers
+                .tokenize(',')
+                .collect { it.trim() }
+                .findAll { it } :
+            []
 
         def known_sites = params.known_sites ?
             params.known_sites.toString().tokenize(',').collect { file(it.trim(), checkIfExists: true) } :
@@ -684,36 +731,45 @@ workflow ATACSEQ {
         ch_variant_alignment_multiqc = FASTQ_VARIANT_CALLING_ATAC.out.multiqc_files
         ch_variant_oncoplot          = FASTQ_VARIANT_CALLING_ATAC.out.oncoplot
         ch_versions = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
-    }
 
-    //
-    // SUBWORKFLOW: ROSE super-enhancers
-    //
-    if (params.run_rose) {
-        MERGED_LIBRARY_SUPERENHANCER_ROSE (
-            MERGED_LIBRARY_CALL_ANNOTATE_PEAKS.out.peaks,
-            ch_bam_bai,
-            ch_gtf,
-            ch_multicov_bams,
-            params.rose_stitch,
-            params.rose_tss
-        )
-        ch_rose_super_enhancer_counts = MERGED_LIBRARY_SUPERENHANCER_ROSE.out.raw_counts
-        ch_versions = ch_versions.mix(MERGED_LIBRARY_SUPERENHANCER_ROSE.out.versions)
-    }
+        //
+        // MODULE: QDNAseq copy-number calling from genetic analysis-ready BAMs
+        //
+        if (params.run_cnv) {
+            ch_qdnaseq_bins = channel.value(file(params.qdnaseq_bins_rds, checkIfExists: true))
 
-    //
-    // SUBWORKFLOW: TOBIAS footprinting
-    //
-    if (params.run_footprinting) {
-        MERGED_LIBRARY_FOOTPRINT_TOBIAS (
-            ch_bam_bai,
-            ch_macs3_consensus_library_bed,
-            ch_fasta,
-            ch_tobias_motifs
-        )
-        ch_tobias_bindetect_multiqc = MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.outdir
-        ch_versions = ch_versions.mix(MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.versions)
+            if (params.qdnaseq_filter_peaks) {
+                FASTQ_VARIANT_CALLING_ATAC
+                    .out
+                    .bam
+                    .combine(ch_cnv_peak_regions)
+                    .map { meta, bam, bai, peak_meta, regions ->
+                        [ meta, bam, bai, regions ]
+                    }
+                    .set { ch_cnv_bam_filter_input }
+
+                CNV_BAM_OUTSIDE_PEAKS (
+                    ch_cnv_bam_filter_input
+                )
+                ch_cnv_bam_bai = CNV_BAM_OUTSIDE_PEAKS.out.bam.join(CNV_BAM_OUTSIDE_PEAKS.out.bai, by: [0])
+                ch_versions = ch_versions.mix(CNV_BAM_OUTSIDE_PEAKS.out.versions)
+            } else {
+                ch_cnv_bam_bai = FASTQ_VARIANT_CALLING_ATAC.out.bam
+            }
+
+            ch_cnv_bam_bai
+                .combine(ch_qdnaseq_bins)
+                .map { meta, bam, bai, bins_rds ->
+                    [ meta, bam, bai, bins_rds, params.qdnaseq_binsize, params.qdnaseq_loss_threshold, params.qdnaseq_gain_threshold ]
+                }
+                .set { ch_qdnaseq_input }
+
+            MERGED_LIBRARY_QDNASEQ (
+                ch_qdnaseq_input
+            )
+            ch_qdnaseq_multiqc = MERGED_LIBRARY_QDNASEQ.out.bins
+            ch_versions = ch_versions.mix(MERGED_LIBRARY_QDNASEQ.out.versions)
+        }
     }
 
     //
@@ -1053,6 +1109,7 @@ workflow ATACSEQ {
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_telomerehunter2_multiqc.map { meta, summary -> summary })
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_nucleoatac_multiqc.map { meta, fragment_sizes -> fragment_sizes })
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_qdnaseq_multiqc.map { meta, bins -> bins })
 
         MULTIQC (
             ch_multiqc_files.collect(),

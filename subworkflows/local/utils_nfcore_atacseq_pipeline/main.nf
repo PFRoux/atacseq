@@ -201,6 +201,18 @@ def validateInputParameters() {
         error("NucleoATAC requires consensus peak regions. Please disable '--skip_consensus_peaks' or disable '--run_nucleoatac'.")
     }
 
+    if (params.run_cnv && !params.qdnaseq_bins_rds) {
+        error("QDNAseq CNV calling requires a bins RDS file. Please provide one with '--qdnaseq_bins_rds bins.rds' or disable '--run_cnv'.")
+    }
+
+    if (params.run_cnv && params.qdnaseq_filter_peaks && params.skip_consensus_peaks) {
+        error("QDNAseq peak filtering requires consensus peak regions. Please disable '--skip_consensus_peaks', disable '--qdnaseq_filter_peaks', or disable '--run_cnv'.")
+    }
+
+    if (params.run_cnv && params.qdnaseq_loss_threshold >= params.qdnaseq_gain_threshold) {
+        error("Invalid QDNAseq thresholds: '--qdnaseq_loss_threshold' must be lower than '--qdnaseq_gain_threshold'.")
+    }
+
     if (params.run_telomerehunter2 && !params.telomerehunter2_cytoband) {
         log.warn("TelomereHunter2 is running without '--telomerehunter2_cytoband'. Telomere content can still be estimated, but subtelomeric/junction-spanning read classes may be incomplete.")
     }

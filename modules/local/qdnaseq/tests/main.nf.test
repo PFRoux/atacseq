@@ -1,0 +1,22 @@
+nextflow_pipeline {
+
+    name "Test QDNASEQ module harness"
+    script "modules/local/qdnaseq/tests/main.nf"
+
+    tag "modules"
+    tag "modules_local"
+    tag "qdnaseq"
+    tag "cnv"
+
+    test("qdnaseq harness - stub") {
+
+        options "-stub"
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().size()).match() }
+            )
+        }
+    }
+}

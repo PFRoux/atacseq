@@ -1,0 +1,81 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "qdnaseq"
+description: Estimate copy-number alterations from binned read counts using QDNAseq
+keywords:
+  - cnv
+  - copy-number
+  - qdnaseq
+  - atac-seq
+tools:
+  - qdnaseq:
+      description: "Quantitative DNA sequencing for chromosomal aberrations"
+      homepage: "https://bioconductor.org/packages/QDNAseq/"
+      documentation: "https://bioconductor.org/packages/QDNAseq/"
+      doi: "10.1186/s13059-014-0547-1"
+      licence: ["GPL-3"]
+      identifier: "biotools:qdnaseq"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - bam:
+      type: file
+      description: Coordinate-sorted BAM file
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.{bai,csi}"
+  - bins_rds:
+      type: file
+      description: QDNAseq bins RDS file
+      pattern: "*.rds"
+  - bin_size:
+      type: integer
+      description: Bin size in kb corresponding to the supplied QDNAseq bins RDS file
+  - loss_threshold:
+      type: number
+      description: Log2 copy-number threshold below which bins are labelled as loss
+  - gain_threshold:
+      type: number
+      description: Log2 copy-number threshold above which bins are labelled as gain
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - rds:
+      type: file
+      description: QDNAseq object after read counting, correction, normalization, segmentation and calling
+      pattern: "*.qdnaseq.rds"
+  - bins:
+      type: file
+      description: Per-bin QDNAseq table
+      pattern: "*.qdnaseq.bins.tsv"
+  - segments:
+      type: file
+      description: Per-segment QDNAseq table when available
+      pattern: "*.qdnaseq.segments.tsv"
+  - calls:
+      type: file
+      description: Per-bin copy-number calls
+      pattern: "*.qdnaseq.calls.tsv"
+  - plots:
+      type: file
+      description: QDNAseq diagnostic plots
+      pattern: "*.qdnaseq.pdf"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"
