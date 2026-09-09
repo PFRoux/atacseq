@@ -554,6 +554,27 @@
                 }
             }
         },
+        "nucleoatac_options": {
+            "title": "NucleoATAC options",
+            "type": "object",
+            "fa_icon": "fas fa-wave-square",
+            "description": "Options for optional NucleoATAC nucleosome positioning and occupancy analysis.",
+            "properties": {
+                "run_nucleoatac": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run NucleoATAC on merged library-level filtered BAM files using merged library consensus peak regions.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "nucleoatac_region_slop": {
+                    "type": "integer",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Number of bp added on each side of consensus peaks before merging and running NucleoATAC.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                }
+            }
+        },
         "telomerehunter2_options": {
             "title": "TelomereHunter2 options",
             "type": "object",
@@ -958,6 +979,9 @@
         },
         {
             "$ref": "#/$defs/chromvar_options"
+        },
+        {
+            "$ref": "#/$defs/nucleoatac_options"
         },
         {
             "$ref": "#/$defs/telomerehunter2_options"

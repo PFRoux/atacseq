@@ -36,9 +36,11 @@ include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../sub
 include { BAM_SUPERENHANCER_ROSE as MERGED_LIBRARY_SUPERENHANCER_ROSE } from '../subworkflows/local/bam_superenhancer_rose'
 include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS } from '../modules/local/bedtools/multicov_counts'
 include { CHROMVAR as MERGED_LIBRARY_CHROMVAR } from '../modules/local/chromvar'
+include { NUCLEOATAC as MERGED_LIBRARY_NUCLEOATAC } from '../modules/local/nucleoatac'
 include { TELOMEREHUNTER2 as MERGED_LIBRARY_TELOMEREHUNTER2 } from '../modules/local/telomerehunter2'
 include { FASTQ_VARIANT_CALLING_ATAC } from '../subworkflows/local/fastq_variant_calling_atac'
 include { BED_SLOP as CONSENSUS_PEAKS_BED_SLOP } from '../modules/local/bed_slop'
+include { BED_SLOP as NUCLEOATAC_BED_SLOP } from '../modules/local/bed_slop'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -548,6 +550,7 @@ workflow ATACSEQ {
     ch_tobias_bindetect_multiqc          = channel.empty()
     ch_telomerehunter2_multiqc           = channel.empty()
     ch_rose_super_enhancer_counts        = channel.empty()
+    ch_nucleoatac_multiqc                = channel.empty()
     ch_variant_vcf_multiqc               = channel.empty()
     ch_variant_alignment_multiqc         = channel.empty()
     ch_variant_oncoplot                  = channel.empty()
@@ -595,6 +598,35 @@ workflow ATACSEQ {
                 ch_chromvar_input
             )
             ch_versions = ch_versions.mix(MERGED_LIBRARY_CHROMVAR.out.versions)
+        }
+
+        if (params.run_nucleoatac) {
+            NUCLEOATAC_BED_SLOP (
+                ch_macs3_consensus_library_bed,
+                ch_fai.map { fai -> [ [:], fai ] },
+                params.nucleoatac_region_slop
+            )
+            ch_versions = ch_versions.mix(NUCLEOATAC_BED_SLOP.out.versions)
+
+            ch_bam_bai
+                .map { meta, bam, bai ->
+                    def signal_bam = bam instanceof List ? bam[0] : bam
+                    def signal_bai = bai instanceof List ? bai[0] : bai
+                    [ meta, signal_bam, signal_bai ]
+                }
+                .combine(NUCLEOATAC_BED_SLOP.out.bed)
+                .combine(ch_fasta)
+                .combine(ch_fai)
+                .map { meta, bam, bai, bed_meta, bed, fasta, fai ->
+                    [ meta, bam, bai, bed, fasta, fai ]
+                }
+                .set { ch_nucleoatac_input }
+
+            MERGED_LIBRARY_NUCLEOATAC (
+                ch_nucleoatac_input
+            )
+            ch_nucleoatac_multiqc = MERGED_LIBRARY_NUCLEOATAC.out.fragment_sizes
+            ch_versions = ch_versions.mix(MERGED_LIBRARY_NUCLEOATAC.out.versions)
         }
 
         if (params.variants_in_peaks_only) {
@@ -1020,6 +1052,7 @@ workflow ATACSEQ {
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_telomerehunter2_multiqc.map { meta, summary -> summary })
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_nucleoatac_multiqc.map { meta, fragment_sizes -> fragment_sizes })
 
         MULTIQC (
             ch_multiqc_files.collect(),

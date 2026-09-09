@@ -1,0 +1,7 @@
+name: nucleoatac
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::nucleoatac=0.3.4

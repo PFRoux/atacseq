@@ -197,6 +197,10 @@ def validateInputParameters() {
         error("chromVAR requires consensus peak counts. Please disable '--skip_consensus_peaks' or disable '--run_chromvar'.")
     }
 
+    if (params.run_nucleoatac && params.skip_consensus_peaks) {
+        error("NucleoATAC requires consensus peak regions. Please disable '--skip_consensus_peaks' or disable '--run_nucleoatac'.")
+    }
+
     if (params.run_telomerehunter2 && !params.telomerehunter2_cytoband) {
         log.warn("TelomereHunter2 is running without '--telomerehunter2_cytoband'. Telomere content can still be estimated, but subtelomeric/junction-spanning read classes may be incomplete.")
     }

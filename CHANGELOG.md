@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add optional TOBIAS footprinting for merged library-level filtered BAM files.
 - Add optional chromVAR motif accessibility deviations from merged library-level consensus peak counts.
+- Add optional NucleoATAC nucleosome positioning and occupancy analysis from merged library-level filtered BAM files.
 - Add optional ROSE super-enhancer calling for merged library-level filtered BAM files and MACS3 peaks.
 - Add raw `bedtools multicov` count matrices for merged library-level consensus peaks and ROSE consensus super-enhancers.
 - Add optional deepTools `bamCoverage` bigWig generation via `--bigwig_method deeptools`, including configurable `--bamcoverage_normalization`, bin size and smoothing.
@@ -50,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--chromvar_min_samples`         |
 |               | `--chromvar_background_peaks`    |
 |               | `--chromvar_motif_p_cutoff`      |
+|               | `--run_nucleoatac`               |
+|               | `--nucleoatac_region_slop`       |
 |               | `--run_telomerehunter2`          |
 |               | `--telomerehunter2_cytoband`     |
 |               | `--telomerehunter2_fast_mode`    |

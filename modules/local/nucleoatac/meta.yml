@@ -1,0 +1,117 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "nucleoatac"
+description: Call nucleosome positions and occupancy from paired-end ATAC-seq data
+keywords:
+  - atac-seq
+  - nucleosome
+  - occupancy
+  - positioning
+tools:
+  - nucleoatac:
+      description: "Python package for calling nucleosome positions and occupancy using ATAC-seq data"
+      homepage: "https://github.com/GreenleafLab/NucleoATAC"
+      documentation: "https://nucleoatac.readthedocs.io/en/latest/"
+      tool_dev_url: "https://github.com/GreenleafLab/NucleoATAC"
+      doi: "10.1101/gr.192294.115"
+      licence: ["MIT"]
+      identifier: "biotools:nucleoatac"
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - bam:
+      type: file
+      description: Coordinate-sorted BAM file
+      pattern: "*.bam"
+  - bai:
+      type: file
+      description: BAM index file
+      pattern: "*.{bai,csi}"
+  - bed:
+      type: file
+      description: Sorted, non-overlapping BED file with regions for nucleosome analysis
+      pattern: "*.bed"
+  - fasta:
+      type: file
+      description: Reference genome FASTA used for alignment
+      pattern: "*.{fa,fasta}"
+  - fai:
+      type: file
+      description: FASTA index
+      pattern: "*.fai"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  - nucpos:
+      type: file
+      description: Nucleosome dyad calls
+      pattern: "*.nucpos.bed.gz"
+  - nucpos_redundant:
+      type: file
+      description: Redundant nucleosome dyad calls
+      pattern: "*.nucpos.redundant.bed.gz"
+  - nfrpos:
+      type: file
+      description: Nucleosome-free region positions
+      pattern: "*.nfrpos.bed.gz"
+  - nucmap_combined:
+      type: file
+      description: Combined low- and high-resolution nucleosome calls
+      pattern: "*.nucmap_combined.bed.gz"
+  - occpeaks:
+      type: file
+      description: Low-resolution nucleosome occupancy peaks
+      pattern: "*.occpeaks.bed.gz"
+  - occupancy:
+      type: file
+      description: Nucleosome occupancy score bedGraph
+      pattern: "*.occ.bedgraph.gz"
+  - occupancy_lower_bound:
+      type: file
+      description: Lower-bound nucleosome occupancy score bedGraph
+      pattern: "*.occ.lower_bound.bedgraph.gz"
+  - occupancy_upper_bound:
+      type: file
+      description: Upper-bound nucleosome occupancy score bedGraph
+      pattern: "*.occ.upper_bound.bedgraph.gz"
+  - signal:
+      type: file
+      description: Normalized NucleoATAC cross-correlation signal bedGraph
+      pattern: "*.nucleoatac_signal.bedgraph.gz"
+  - signal_smooth:
+      type: file
+      description: Smoothed normalized NucleoATAC signal bedGraph
+      pattern: "*.nucleoatac_signal.smooth.bedgraph.gz"
+  - fragment_sizes:
+      type: file
+      description: Fragment size distribution in the input regions
+      pattern: "*.fragmentsizes.txt"
+  - nuc_dist:
+      type: file
+      description: Estimated nucleosomal fragment size distribution
+      pattern: "*.nuc_dist.txt"
+  - vmat:
+      type: file
+      description: Normalized V-plot matrix for cross-correlation
+      pattern: "*.VMat"
+  - plots:
+      type: file
+      description: EPS diagnostic plots
+      pattern: "*.eps"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

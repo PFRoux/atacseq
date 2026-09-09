@@ -321,6 +321,27 @@ If `--run_footprinting` is specified, the pipeline runs [TOBIAS](https://github.
 
 If `--run_chromvar` is specified, the pipeline runs [chromVAR](https://greenleaflab.github.io/chromVAR/) on the raw read count matrix generated from merged library-level consensus peaks. Motifs supplied with `--chromvar_motifs` are matched to consensus peak regions with motifmatchr, GC bias and background peaks are estimated from the supplied reference FASTA, and chromVAR deviations are reported for each motif across samples.
 
+### Nucleosome positioning and occupancy
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/nucleoatac/regions/`
+  - `consensus_peaks.nucleoatac.slop<N>.bed`: Consensus peak regions optionally extended by `--nucleoatac_region_slop`, sorted and merged before NucleoATAC.
+- `<ALIGNER>/merged_library/nucleoatac/<SAMPLE>/`
+  - `*.nucpos.bed.gz`: Nucleosome dyad calls.
+  - `*.nucpos.redundant.bed.gz`: Redundant nucleosome dyad calls.
+  - `*.nfrpos.bed.gz`: Nucleosome-free region positions.
+  - `*.nucmap_combined.bed.gz`: Combined low- and high-resolution nucleosome calls.
+  - `*.occpeaks.bed.gz`: Low-resolution occupancy peaks.
+  - `*.occ.bedgraph.gz`, `*.occ.lower_bound.bedgraph.gz`, `*.occ.upper_bound.bedgraph.gz`: Occupancy score tracks.
+  - `*.nucleoatac_signal.bedgraph.gz`, `*.nucleoatac_signal.smooth.bedgraph.gz`: Normalized cross-correlation signal tracks.
+  - `*.fragmentsizes.txt`, `*.nuc_dist.txt`, `*.VMat`, `*.eps`: Fragment-size, V-plot and model diagnostics.
+
+</details>
+
+If `--run_nucleoatac` is specified, the pipeline runs [NucleoATAC](https://nucleoatac.readthedocs.io/en/latest/) on filtered merged library-level BAM files. The analysis uses the merged library consensus peak set as the open-chromatin search space. The regions can be widened with `--nucleoatac_region_slop` and are sorted and merged before running NucleoATAC so that overlapping windows are not passed to the tool.
+
 ### Telomere content and telomeric variant repeats
 
 <details markdown="1">
