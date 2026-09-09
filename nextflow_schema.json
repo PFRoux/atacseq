@@ -503,6 +503,101 @@
                 }
             }
         },
+        "chromvar_options": {
+            "title": "chromVAR options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-line",
+            "description": "Options for optional chromVAR motif accessibility deviation analysis.",
+            "properties": {
+                "run_chromvar": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run chromVAR on merged library-level consensus peak counts.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "chromvar_motifs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Motif file in JASPAR format supplied to motifmatchr/chromVAR.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "chromvar_min_counts": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 0,
+                    "description": "Minimum total counts required to keep a consensus peak for chromVAR.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "chromvar_min_samples": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Minimum number of samples with non-zero counts required to keep a consensus peak for chromVAR.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "chromvar_background_peaks": {
+                    "type": "integer",
+                    "default": 50,
+                    "minimum": 1,
+                    "description": "Number of background peak iterations used by chromVAR.",
+                    "fa_icon": "fas fa-random"
+                },
+                "chromvar_motif_p_cutoff": {
+                    "type": "number",
+                    "default": 0.00005,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Motif matching p-value cutoff passed to motifmatchr.",
+                    "fa_icon": "fas fa-percentage"
+                }
+            }
+        },
+        "telomerehunter2_options": {
+            "title": "TelomereHunter2 options",
+            "type": "object",
+            "fa_icon": "fas fa-ruler-horizontal",
+            "description": "Options for optional TelomereHunter2 telomere content and telomeric variant repeat analysis.",
+            "properties": {
+                "run_telomerehunter2": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run TelomereHunter2 on merged library-level filtered BAM files.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "telomerehunter2_cytoband": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Optional cytoband file supplied to TelomereHunter2 with -b. Recommended for subtelomeric and junction-spanning read classification.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "telomerehunter2_fast_mode": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run TelomereHunter2 in fast mode for a quick overview.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "telomerehunter2_plot_none": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable TelomereHunter2 plot generation.",
+                    "fa_icon": "fas fa-image"
+                },
+                "telomerehunter2_repeats": {
+                    "type": "string",
+                    "description": "Optional comma-separated telomeric repeats passed to TelomereHunter2 --repeats, for example TTAGGG,TCAGGG.",
+                    "fa_icon": "fas fa-list"
+                },
+                "telomerehunter2_repeats_context": {
+                    "type": "string",
+                    "description": "Optional comma-separated repeat contexts passed to TelomereHunter2 --repeatsContext.",
+                    "fa_icon": "fas fa-list"
+                }
+            }
+        },
         "variant_calling_options": {
             "title": "Variant calling options",
             "type": "object",
@@ -860,6 +955,12 @@
         },
         {
             "$ref": "#/$defs/footprinting_options"
+        },
+        {
+            "$ref": "#/$defs/chromvar_options"
+        },
+        {
+            "$ref": "#/$defs/telomerehunter2_options"
         },
         {
             "$ref": "#/$defs/variant_calling_options"

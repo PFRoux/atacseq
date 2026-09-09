@@ -1,0 +1,97 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "chromvar"
+description: Compute chromVAR motif accessibility deviations from consensus ATAC-seq peak counts
+keywords:
+  - atac-seq
+  - motifs
+  - chromvar
+  - accessibility
+tools:
+  - chromvar:
+      description: "Bias-corrected deviations in chromatin accessibility across motifs or annotations"
+      homepage: "https://greenleaflab.github.io/chromVAR/"
+      documentation: "https://greenleaflab.github.io/chromVAR/"
+      doi: "10.1038/nmeth.4401"
+      licence: ["MIT"]
+      identifier: "biotools:chromvar"
+  - motifmatchr:
+      description: "Fast motif matching in genomic ranges"
+      homepage: "https://greenleaflab.github.io/motifmatchr/"
+      documentation: "https://greenleaflab.github.io/motifmatchr/"
+      licence: ["MIT"]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing count matrix information
+        e.g. `[ id:'consensus_peaks' ]`
+  - counts:
+      type: file
+      description: Raw count matrix generated over consensus peaks
+      pattern: "*.raw_counts.tsv"
+  - regions:
+      type: file
+      description: Consensus peak BED file used for counting
+      pattern: "*.bed"
+  - fasta:
+      type: file
+      description: Reference genome FASTA
+      pattern: "*.{fa,fasta}"
+  - fai:
+      type: file
+      description: FASTA index
+      pattern: "*.fai"
+  - motifs:
+      type: file
+      description: Motif file in JASPAR format
+      pattern: "*"
+  - min_counts:
+      type: integer
+      description: Minimum total counts required to keep a peak
+  - min_samples:
+      type: integer
+      description: Minimum number of samples with non-zero counts required to keep a peak
+  - background_peaks:
+      type: integer
+      description: Number of background peak iterations for chromVAR
+  - motif_p_cutoff:
+      type: number
+      description: Motif matching p-value cutoff
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing count matrix information
+        e.g. `[ id:'consensus_peaks' ]`
+  - deviations:
+      type: file
+      description: Long-format chromVAR deviation matrix
+      pattern: "*.chromvar_deviations.tsv"
+  - z:
+      type: file
+      description: Long-format chromVAR z-score matrix
+      pattern: "*.chromvar_z.tsv"
+  - variability:
+      type: file
+      description: Motif variability statistics
+      pattern: "*.chromvar_variability.tsv"
+  - pca:
+      type: file
+      description: PCA coordinates computed from chromVAR z-scores
+      pattern: "*.chromvar_pca.tsv"
+  - rds:
+      type: file
+      description: RDS object containing chromVAR inputs and results
+      pattern: "*.chromvar.rds"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

@@ -35,6 +35,8 @@ include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_REPL
 include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../subworkflows/local/bam_footprint_tobias'
 include { BAM_SUPERENHANCER_ROSE as MERGED_LIBRARY_SUPERENHANCER_ROSE } from '../subworkflows/local/bam_superenhancer_rose'
 include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS } from '../modules/local/bedtools/multicov_counts'
+include { CHROMVAR as MERGED_LIBRARY_CHROMVAR } from '../modules/local/chromvar'
+include { TELOMEREHUNTER2 as MERGED_LIBRARY_TELOMEREHUNTER2 } from '../modules/local/telomerehunter2'
 include { FASTQ_VARIANT_CALLING_ATAC } from '../subworkflows/local/fastq_variant_calling_atac'
 include { BED_SLOP as CONSENSUS_PEAKS_BED_SLOP } from '../modules/local/bed_slop'
 
@@ -115,6 +117,8 @@ workflow ATACSEQ {
     ch_multiqc_merged_replicate_deseq2_pca_header        = file("$projectDir/assets/multiqc/merged_replicate_deseq2_pca_header.txt", checkIfExists: true)
     ch_multiqc_merged_replicate_deseq2_clustering_header = file("$projectDir/assets/multiqc/merged_replicate_deseq2_clustering_header.txt", checkIfExists: true)
     ch_tobias_motifs                                     = params.tobias_motifs ? channel.fromPath(params.tobias_motifs, checkIfExists: true) : channel.empty()
+    ch_chromvar_motifs                                   = params.chromvar_motifs ? channel.fromPath(params.chromvar_motifs, checkIfExists: true) : channel.empty()
+    ch_telomerehunter2_cytoband                          = params.telomerehunter2_cytoband ? channel.fromPath(params.telomerehunter2_cytoband, checkIfExists: true) : channel.value([])
 
     // Check ataqv_mito_reference parameter
     ataqv_mito_reference = params.ataqv_mito_reference
@@ -542,6 +546,7 @@ workflow ATACSEQ {
     ch_deseq2_pca_library_multiqc        = channel.empty()
     ch_deseq2_clustering_library_multiqc = channel.empty()
     ch_tobias_bindetect_multiqc          = channel.empty()
+    ch_telomerehunter2_multiqc           = channel.empty()
     ch_rose_super_enhancer_counts        = channel.empty()
     ch_variant_vcf_multiqc               = channel.empty()
     ch_variant_alignment_multiqc         = channel.empty()
@@ -571,6 +576,26 @@ workflow ATACSEQ {
                 .map { meta, bed, sample_names, bams, bais -> [ meta, bed, sample_names, bams, bais ] }
         )
         ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS.out.versions)
+
+        if (params.run_chromvar) {
+            MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS
+                .out
+                .counts
+                .join(ch_macs3_consensus_library_bed, by: [0])
+                .map { meta, counts, bed -> [ meta, counts, bed ] }
+                .combine(ch_fasta)
+                .combine(ch_fai)
+                .combine(ch_chromvar_motifs)
+                .map { meta, counts, bed, fasta, fai, motifs ->
+                    [ meta, counts, bed, fasta, fai, motifs, params.chromvar_min_counts, params.chromvar_min_samples, params.chromvar_background_peaks, params.chromvar_motif_p_cutoff ]
+                }
+                .set { ch_chromvar_input }
+
+            MERGED_LIBRARY_CHROMVAR (
+                ch_chromvar_input
+            )
+            ch_versions = ch_versions.mix(MERGED_LIBRARY_CHROMVAR.out.versions)
+        }
 
         if (params.variants_in_peaks_only) {
             CONSENSUS_PEAKS_BED_SLOP (
@@ -657,6 +682,29 @@ workflow ATACSEQ {
         )
         ch_tobias_bindetect_multiqc = MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.outdir
         ch_versions = ch_versions.mix(MERGED_LIBRARY_FOOTPRINT_TOBIAS.out.versions)
+    }
+
+    //
+    // MODULE: TelomereHunter2 telomere content and TVR analysis
+    //
+    if (params.run_telomerehunter2) {
+        ch_bam_bai
+            .map { meta, bam, bai ->
+                def signal_bam = bam instanceof List ? bam[0] : bam
+                def signal_bai = bai instanceof List ? bai[0] : bai
+                [ meta, signal_bam, signal_bai ]
+            }
+            .combine(ch_telomerehunter2_cytoband)
+            .map { meta, bam, bai, cytoband ->
+                [ meta, bam, bai, cytoband, params.telomerehunter2_fast_mode, params.telomerehunter2_plot_none, params.telomerehunter2_repeats, params.telomerehunter2_repeats_context ]
+            }
+            .set { ch_telomerehunter2_input }
+
+        MERGED_LIBRARY_TELOMEREHUNTER2 (
+            ch_telomerehunter2_input
+        )
+        ch_telomerehunter2_multiqc = MERGED_LIBRARY_TELOMEREHUNTER2.out.summary
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_TELOMEREHUNTER2.out.versions)
     }
 
     // Create channels: [ meta, bam, bai, peak_file ]
@@ -971,6 +1019,7 @@ workflow ATACSEQ {
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                          = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_telomerehunter2_multiqc.map { meta, summary -> summary })
 
         MULTIQC (
             ch_multiqc_files.collect(),

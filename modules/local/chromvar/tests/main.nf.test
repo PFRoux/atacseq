@@ -1,0 +1,20 @@
+nextflow_pipeline {
+
+    name "Test CHROMVAR module harness"
+    script "modules/local/chromvar/tests/main.nf"
+
+    tag "modules"
+    tag "modules_local"
+    tag "chromvar"
+
+    test("chromvar harness - stub") {
+        options "-stub"
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().size()).match() }
+            )
+        }
+    }
+}

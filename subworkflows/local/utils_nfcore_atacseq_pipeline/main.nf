@@ -189,6 +189,18 @@ def validateInputParameters() {
         error("TOBIAS footprinting requires consensus peaks. Please disable '--skip_consensus_peaks' or disable '--run_footprinting'.")
     }
 
+    if (params.run_chromvar && !params.chromvar_motifs) {
+        error("chromVAR requires a motif file. Please provide one with '--chromvar_motifs motifs.jaspar'.")
+    }
+
+    if (params.run_chromvar && params.skip_consensus_peaks) {
+        error("chromVAR requires consensus peak counts. Please disable '--skip_consensus_peaks' or disable '--run_chromvar'.")
+    }
+
+    if (params.run_telomerehunter2 && !params.telomerehunter2_cytoband) {
+        log.warn("TelomereHunter2 is running without '--telomerehunter2_cytoband'. Telomere content can still be estimated, but subtelomeric/junction-spanning read classes may be incomplete.")
+    }
+
     if (params.run_rose && !params.gtf && !params.gff) {
         error("ROSE super-enhancer calling requires a gene annotation. Please provide '--gtf' or '--gff', or disable '--run_rose'.")
     }

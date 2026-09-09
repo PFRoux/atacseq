@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconductor-chromvar=1.28.0
+  - bioconductor-motifmatchr
+  - bioconductor-tfbstools
+  - bioconductor-rsamtools
+  - bioconductor-summarizedexperiment
+  - r-optparse

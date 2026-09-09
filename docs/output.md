@@ -305,6 +305,38 @@ If `--run_rose` is specified, the pipeline runs [ROSE](https://github.com/stjude
 
 If `--run_footprinting` is specified, the pipeline runs [TOBIAS](https://github.com/loosolab/TOBIAS) on the filtered merged library-level BAM files. ATACorrect first corrects Tn5 insertion bias using the reference FASTA and the merged library consensus peak set. ScoreBigwig then calculates footprint scores over the same consensus regions. Finally, BINDetect is run once across all available samples using the motif file supplied with `--tobias_motifs`.
 
+### Motif accessibility deviations
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/chromvar/`
+  - `*.chromvar_deviations.tsv`: Long-format chromVAR motif deviation values per motif and sample.
+  - `*.chromvar_z.tsv`: Long-format chromVAR motif deviation z-scores per motif and sample.
+  - `*.chromvar_variability.tsv`: Motif variability statistics across samples.
+  - `*.chromvar_pca.tsv`: PCA coordinates computed from motif deviation z-scores.
+  - `*.chromvar.rds`: R object containing the chromVAR inputs and outputs.
+
+</details>
+
+If `--run_chromvar` is specified, the pipeline runs [chromVAR](https://greenleaflab.github.io/chromVAR/) on the raw read count matrix generated from merged library-level consensus peaks. Motifs supplied with `--chromvar_motifs` are matched to consensus peak regions with motifmatchr, GC bias and background peaks are estimated from the supplied reference FASTA, and chromVAR deviations are reported for each motif across samples.
+
+### Telomere content and telomeric variant repeats
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/telomerehunter2/<SAMPLE>/`
+  - `*.telomerehunter2/`: Complete TelomereHunter2 output directory.
+  - `*.telomerehunter2.summary.tsv`: Per-sample summary table copied from the TelomereHunter2 output directory when generated.
+  - `*.telomerehunter2.TVR_top_contexts.tsv`: Telomeric variant repeat context summary copied from the TelomereHunter2 output directory when generated.
+  - `*.telomerehunter2.singletons.tsv`: Singleton telomeric variant repeat table copied from the TelomereHunter2 output directory when generated.
+  - `*.telomerehunter2.files.txt`: File index for the complete TelomereHunter2 output directory.
+
+</details>
+
+If `--run_telomerehunter2` is specified, the pipeline runs [TelomereHunter2](https://github.com/ferdinand-popp/telomerehunter2) on the filtered merged library-level BAM files. Supplying `--telomerehunter2_cytoband` is recommended so that subtelomeric and junction-spanning telomeric reads can be classified with the same chromosome naming convention as the aligned BAM files. Custom telomeric repeats can be passed with `--telomerehunter2_repeats` and `--telomerehunter2_repeats_context`.
+
 ### ataqv
 
 <details markdown="1">

@@ -1,0 +1,21 @@
+nextflow_pipeline {
+
+    name "Test TELOMEREHUNTER2 module harness"
+    script "modules/local/telomerehunter2/tests/main.nf"
+
+    tag "modules"
+    tag "modules_local"
+    tag "telomerehunter2"
+
+    test("telomerehunter2 harness - stub") {
+
+        options "-stub"
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().size()).match() }
+            )
+        }
+    }
+}
