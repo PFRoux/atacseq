@@ -49,6 +49,12 @@ process NUCLEOATAC {
         --out ${prefix} \\
         --cores ${task.cpus}${args_line}
 
+    for file in ${prefix}*.bed ${prefix}*.bedgraph; do
+        if [[ -f "\$file" ]]; then
+            gzip -f "\$file"
+        fi
+    done
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         nucleoatac: \$(python -c 'import pkg_resources; print(pkg_resources.get_distribution("NucleoATAC").version)')
