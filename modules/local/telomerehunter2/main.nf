@@ -50,9 +50,9 @@ process TELOMEREHUNTER2 {
         $args
 
     find ${prefix}.telomerehunter2 -type f | sort > ${prefix}.telomerehunter2.files.txt
-    find ${prefix}.telomerehunter2 -name summary.tsv -exec cp {} ${prefix}.telomerehunter2.summary.tsv \\; -quit
-    find ${prefix}.telomerehunter2 -name TVR_top_contexts.tsv -exec cp {} ${prefix}.telomerehunter2.TVR_top_contexts.tsv \\; -quit
-    find ${prefix}.telomerehunter2 -name singletons.tsv -exec cp {} ${prefix}.telomerehunter2.singletons.tsv \\; -quit
+    find ${prefix}.telomerehunter2 -name '*_summary.tsv' -exec cp {} ${prefix}.telomerehunter2.summary.tsv \\; -quit
+    find ${prefix}.telomerehunter2 -name '*TVR_top_contexts.tsv' -exec cp {} ${prefix}.telomerehunter2.TVR_top_contexts.tsv \\; -quit
+    find ${prefix}.telomerehunter2 -name '*singletons.tsv' -exec cp {} ${prefix}.telomerehunter2.singletons.tsv \\; -quit
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
