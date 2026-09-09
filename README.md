@@ -76,6 +76,13 @@ On release, automated continuous integration tests run the pipeline on a full-si
 7. Create IGV session file containing bigWig tracks, peaks and differential sites for data visualisation ([`IGV`](https://software.broadinstitute.org/software/igv/)).
 8. Present QC for raw read, alignment, peak-calling and differential accessibility results ([`ataqv`](https://github.com/ParkerLab/ataqv), [`MultiQC`](http://multiqc.info/), [`R`](https://www.r-project.org/))
 
+Optional downstream analyses are organised into two complementary layers:
+
+- Epigenetic analyses of chromatin accessibility and regulatory activity: configurable bigWig generation, ROSE super-enhancer calling, TOBIAS footprinting, chromVAR motif deviation analysis and NucleoATAC nucleosome positioning.
+- Genetic analyses from ATAC-seq reads: BWA/GATK preprocessing, short-variant calling, optional variant filtering to accessible regions, QDNAseq copy-number calling and TelomereHunter2 telomere content analysis.
+
+These downstream layers are disabled by default and can be enabled independently with their corresponding parameters. They are intended to extend ATAC-seq interpretation while keeping the standard nf-core/atacseq QC, alignment, peak calling and differential accessibility workflow intact.
+
 ## Usage
 
 > [!NOTE]

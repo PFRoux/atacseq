@@ -26,6 +26,10 @@
 
   > Ramírez F, Ryan DP, Grüning B, Bhardwaj V, Kilpert F, Richter AS, Heyne S, Dündar F, Manke T. deepTools2: a next generation web server for deep-sequencing data analysis. Nucleic Acids Res. 2016 Jul 8;44(W1):W160-5. doi: 10.1093/nar/gkw257. Epub 2016 Apr 13. PubMed PMID: 27079975; PubMed Central PMCID: PMC4987876.
 
+- [DeepVariant](https://pubmed.ncbi.nlm.nih.gov/30247488/)
+
+  > Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D, Dijamco J, Nguyen N, Afshar PT, Gross SS, Dorfman L, McLean CY, DePristo MA. A universal SNP and small-indel variant caller using deep neural networks. Nat Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. PubMed PMID: 30247488.
+
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
 > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online].
@@ -33,6 +37,14 @@
 - [featureCounts](https://www.ncbi.nlm.nih.gov/pubmed/24227677/)
 
   > Liao Y, Smyth GK, Shi W. featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. Bioinformatics. 2014 Apr 1;30(7):923-30. doi: 10.1093/bioinformatics/btt656. Epub 2013 Nov 13. PubMed PMID: 24227677.
+
+- [FreeBayes](https://arxiv.org/abs/1207.3907)
+
+  > Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing. arXiv. 2012. doi: 10.48550/arXiv.1207.3907.
+
+- [GATK](https://pubmed.ncbi.nlm.nih.gov/20644199/)
+
+  > McKenna A, Hanna M, Banks E, Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D, Gabriel S, Daly M, DePristo MA. The Genome Analysis Toolkit: a MapReduce framework for analyzing next-generation DNA sequencing data. Genome Res. 2010 Sep;20(9):1297-303. doi: 10.1101/gr.107524.110. PubMed PMID: 20644199; PubMed Central PMCID: PMC2928508.
 
 - [HOMER](https://www.ncbi.nlm.nih.gov/pubmed/20513432/)
 
@@ -58,6 +70,10 @@
 
   > Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R; 1000 Genome Project Data Processing Subgroup. The Sequence Alignment/Map format and SAMtools. Bioinformatics. 2009 Aug 15;25(16):2078-9. doi: 10.1093/bioinformatics/btp352. Epub 2009 Jun 8. PubMed PMID: 19505943; PubMed Central PMCID: PMC2723002.
 
+- [TOBIAS](https://pubmed.ncbi.nlm.nih.gov/33037195/)
+
+  > Bentsen M, Goymann P, Schultheis H, Klee K, Petrova A, Wiegandt R, Fust A, Preussner J, Kuenne C, Braun T, Kim J, Looso M. ATAC-seq footprinting unravels kinetics of transcription factor binding during zygotic genome activation. Nat Commun. 2020 Aug 19;11(1):4267. doi: 10.1038/s41467-020-18035-1. PubMed PMID: 33037195; PubMed Central PMCID: PMC7548418.
+
 - [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
 
 - [UCSC tools](https://www.ncbi.nlm.nih.gov/pubmed/20639541/)
@@ -65,6 +81,10 @@
   > Kent WJ, Zweig AS, Barber G, Hinrichs AS, Karolchik D. BigWig and BigBed: enabling browsing of large distributed datasets. Bioinformatics. 2010 Sep 1;26(17):2204-7. doi: 10.1093/bioinformatics/btq351. Epub 2010 Jul 17. PubMed PMID: 20639541; PubMed Central PMCID: PMC2922891.
 
 - [ataqv](https://github.com/ParkerLab/ataqv)
+
+- [TelomereHunter2](https://pypi.org/project/telomerehunter2/)
+
+- [ROSE](https://github.com/stjude/ROSE)
 
 ## R packages
 
@@ -75,6 +95,10 @@
 - [DESeq2](https://www.ncbi.nlm.nih.gov/pubmed/25516281/)
 
   > Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014;15(12):550. PubMed PMID: 25516281; PubMed Central PMCID: PMC4302049.
+
+- [chromVAR](https://pubmed.ncbi.nlm.nih.gov/28825706/)
+
+  > Schep AN, Wu B, Buenrostro JD, Greenleaf WJ. chromVAR: inferring transcription-factor-associated accessibility from single-cell epigenomic data. Nat Methods. 2017 Oct;14(10):975-978. doi: 10.1038/nmeth.4401. PubMed PMID: 28825706.
 
 - [UpSetR](https://CRAN.R-project.org/package=UpSetR)
 
@@ -103,6 +127,10 @@
 - [optparse](https://CRAN.R-project.org/package=optparse)
 
   > Trevor L Davis (2018). optparse: Command Line Option Parser.
+
+- [QDNAseq](https://pubmed.ncbi.nlm.nih.gov/25236618/)
+
+  > Scheinin I, Sie D, Bengtsson H, van de Wiel MA, Olshen AB, van Thuijl HF, van Essen HF, Eijk PP, Rustenburg F, Meijer GA, Reijneveld JC, Wesseling P, Pinkel D, Albertson DG, Ylstra B. DNA copy number analysis of fresh and formalin-fixed specimens by shallow whole-genome sequencing with identification and exclusion of problematic regions in the genome assembly. Genome Res. 2014 Dec;24(12):2022-32. doi: 10.1101/gr.175141.114. PubMed PMID: 25236618; PubMed Central PMCID: PMC4248318.
 
 ## Software packaging/containerisation tools
 

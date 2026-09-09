@@ -175,6 +175,57 @@ read_length: 150
 
 You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
 
+## Optional downstream analysis layers
+
+The default pipeline behaviour remains focused on ATAC-seq quality control, alignment, peak calling, consensus peak generation, read counting and differential accessibility. Additional downstream analyses can be enabled independently and are grouped into two layers.
+
+### Epigenetic layer
+
+The epigenetic layer analyses chromatin accessibility, regulatory regions and transcription factor activity from the filtered merged-library ATAC-seq alignments.
+
+- `--bigwig_method deeptools` can be used to generate normalized bigWig tracks with deepTools `bamCoverage`. The normalization method is controlled with `--bamcoverage_normalization`.
+- `--run_rose` runs ROSE super-enhancer calling on merged-library MACS3 peaks and counts reads over consensus super-enhancers.
+- `--run_footprinting` runs TOBIAS ATACorrect, ScoreBigwig and one BINDetect analysis across all samples. A motif file must be supplied with `--tobias_motifs`.
+- `--run_chromvar` runs chromVAR on consensus peak counts. A motif file must be supplied with `--chromvar_motifs`.
+- `--run_nucleoatac` runs NucleoATAC on consensus peak regions widened by `--nucleoatac_region_slop`.
+
+These analyses require a consistent chromosome naming convention across FASTA, GTF/GFF, blacklist, motif-dependent annotations where relevant, alignment indices and BAM files. For example, do not mix `chr1` peak files with reference indices using `1`.
+
+### Genetic layer
+
+The genetic layer uses a separate BWA/GATK preprocessing path and is intended for variant- and genome-instability-oriented analyses from ATAC-seq reads.
+
+- `--run_variants` enables short-variant calling. The selected callers are controlled with `--variant_callers`, for example `--variant_callers haplotypecaller,freebayes,bcftools`.
+- `--variants_in_peaks_only` filters final VCF files to variants located in consensus peak regions widened by `--peak_filter_slop`.
+- `--run_cnv` enables QDNAseq copy-number calling from the genetic-layer BAM files. A bins RDS file matching the genome and bin size must be supplied with `--qdnaseq_bins_rds`.
+- `--qdnaseq_filter_peaks true` removes reads overlapping widened consensus peaks before QDNAseq counting. This is enabled by default so that copy-number estimates are not dominated by highly accessible ATAC-seq regions.
+- `--run_telomerehunter2` enables TelomereHunter2 telomere content and telomeric variant repeat analysis.
+
+Because these analyses are inferred from ATAC-seq libraries, they should be interpreted with the expected caveats of uneven genome coverage, open-chromatin enrichment, mitochondrial reads and local mappability. They are useful for screening and joint interpretation, but they do not replace dedicated WGS/WES or telomere-specific assays.
+
+Example `params.yaml` enabling the extended layers without DeepVariant:
+
+```yaml title="params.yaml"
+input: './samplesheet.csv'
+outdir: './results/'
+genome: 'GRCm39'
+
+run_rose: true
+run_footprinting: true
+tobias_motifs: './motifs.jaspar'
+run_chromvar: true
+chromvar_motifs: './motifs.jaspar'
+
+run_variants: true
+variant_callers: 'haplotypecaller,freebayes,bcftools'
+variants_in_peaks_only: true
+skip_bqsr: true
+
+run_cnv: true
+qdnaseq_bins_rds: './QDNAseq_bins.rds'
+qdnaseq_filter_peaks: true
+```
+
 ### Updating the pipeline
 
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
