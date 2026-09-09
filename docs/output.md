@@ -329,13 +329,13 @@ If `--run_chromvar` is specified, the pipeline runs [chromVAR](https://greenleaf
 - `<ALIGNER>/merged_library/nucleoatac/regions/`
   - `consensus_peaks.nucleoatac.slop<N>.bed`: Consensus peak regions optionally extended by `--nucleoatac_region_slop`, sorted and merged before NucleoATAC.
 - `<ALIGNER>/merged_library/nucleoatac/<SAMPLE>/`
-  - `*.nucpos.bed.gz`: Nucleosome dyad calls.
-  - `*.nucpos.redundant.bed.gz`: Redundant nucleosome dyad calls.
-  - `*.nfrpos.bed.gz`: Nucleosome-free region positions.
-  - `*.nucmap_combined.bed.gz`: Combined low- and high-resolution nucleosome calls.
-  - `*.occpeaks.bed.gz`: Low-resolution occupancy peaks.
-  - `*.occ.bedgraph.gz`, `*.occ.lower_bound.bedgraph.gz`, `*.occ.upper_bound.bedgraph.gz`: Occupancy score tracks.
-  - `*.nucleoatac_signal.bedgraph.gz`, `*.nucleoatac_signal.smooth.bedgraph.gz`: Normalized cross-correlation signal tracks.
+  - `*.nucpos.bed*`: Nucleosome dyad calls.
+  - `*.nucpos.redundant.bed*`: Redundant nucleosome dyad calls.
+  - `*.nfrpos.bed*`: Nucleosome-free region positions.
+  - `*.nucmap_combined.bed*`: Combined low- and high-resolution nucleosome calls.
+  - `*.occpeaks.bed*`: Low-resolution occupancy peaks.
+  - `*.occ.bedgraph*`, `*.occ.lower_bound.bedgraph*`, `*.occ.upper_bound.bedgraph*`: Occupancy score tracks.
+  - `*.nucleoatac_signal.bedgraph*`, `*.nucleoatac_signal.smooth.bedgraph*`: Normalized cross-correlation signal tracks.
   - `*.fragmentsizes.txt`, `*.nuc_dist.txt`, `*.VMat`, `*.eps`: Fragment-size, V-plot and model diagnostics.
 
 </details>

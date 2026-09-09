@@ -53,43 +53,43 @@ output:
   - nucpos:
       type: file
       description: Nucleosome dyad calls
-      pattern: "*.nucpos.bed.gz"
+      pattern: "*.nucpos.bed*"
   - nucpos_redundant:
       type: file
       description: Redundant nucleosome dyad calls
-      pattern: "*.nucpos.redundant.bed.gz"
+      pattern: "*.nucpos.redundant.bed*"
   - nfrpos:
       type: file
       description: Nucleosome-free region positions
-      pattern: "*.nfrpos.bed.gz"
+      pattern: "*.nfrpos.bed*"
   - nucmap_combined:
       type: file
       description: Combined low- and high-resolution nucleosome calls
-      pattern: "*.nucmap_combined.bed.gz"
+      pattern: "*.nucmap_combined.bed*"
   - occpeaks:
       type: file
       description: Low-resolution nucleosome occupancy peaks
-      pattern: "*.occpeaks.bed.gz"
+      pattern: "*.occpeaks.bed*"
   - occupancy:
       type: file
       description: Nucleosome occupancy score bedGraph
-      pattern: "*.occ.bedgraph.gz"
+      pattern: "*.occ.bedgraph*"
   - occupancy_lower_bound:
       type: file
       description: Lower-bound nucleosome occupancy score bedGraph
-      pattern: "*.occ.lower_bound.bedgraph.gz"
+      pattern: "*.occ.lower_bound.bedgraph*"
   - occupancy_upper_bound:
       type: file
       description: Upper-bound nucleosome occupancy score bedGraph
-      pattern: "*.occ.upper_bound.bedgraph.gz"
+      pattern: "*.occ.upper_bound.bedgraph*"
   - signal:
       type: file
       description: Normalized NucleoATAC cross-correlation signal bedGraph
-      pattern: "*.nucleoatac_signal.bedgraph.gz"
+      pattern: "*.nucleoatac_signal.bedgraph*"
   - signal_smooth:
       type: file
       description: Smoothed normalized NucleoATAC signal bedGraph
-      pattern: "*.nucleoatac_signal.smooth.bedgraph.gz"
+      pattern: "*.nucleoatac_signal.smooth.bedgraph*"
   - fragment_sizes:
       type: file
       description: Fragment size distribution in the input regions
