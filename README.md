@@ -76,12 +76,24 @@ On release, automated continuous integration tests run the pipeline on a full-si
 7. Create IGV session file containing bigWig tracks, peaks and differential sites for data visualisation ([`IGV`](https://software.broadinstitute.org/software/igv/)).
 8. Present QC for raw read, alignment, peak-calling and differential accessibility results ([`ataqv`](https://github.com/ParkerLab/ataqv), [`MultiQC`](http://multiqc.info/), [`R`](https://www.r-project.org/))
 
-Optional downstream analyses are organised into two complementary layers:
+Optional downstream analyses can be enabled after the standard nf-core/atacseq processing and are organised into two complementary layers:
 
-- Epigenetic analyses of chromatin accessibility and regulatory activity: configurable bigWig generation, ROSE super-enhancer calling, TOBIAS footprinting, chromVAR motif deviation analysis and NucleoATAC nucleosome positioning.
-- Genetic analyses from ATAC-seq reads: BWA/GATK preprocessing, short-variant calling, optional variant filtering to accessible regions, QDNAseq copy-number calling and TelomereHunter2 telomere content analysis.
+9. Epigenetic analyses of chromatin accessibility and regulatory activity
+   1. Generate normalized bigWig tracks either with the standard BEDTools / bedGraphToBigWig strategy or with configurable [`deepTools bamCoverage`](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html) normalization (`--bigwig_method`, `--bamcoverage_normalization`).
+   2. Call stitched enhancers and super-enhancers from merged-library MACS3 peaks and filtered BAM files ([`ROSE`](https://github.com/stjude/ROSE); `--run_rose`).
+   3. Build a consensus super-enhancer set and quantify raw reads over those regions ([`BEDTools multicov`](https://bedtools.readthedocs.io/en/latest/content/tools/multicov.html); `--run_rose`).
+   4. Correct Tn5 sequence bias, compute footprint scores and detect differential transcription factor binding across all samples ([`TOBIAS`](https://github.com/loosolab/TOBIAS); `--run_footprinting`, `--tobias_motifs`).
+   5. Estimate motif-associated chromatin accessibility deviations from consensus peak counts ([`chromVAR`](https://greenleaflab.github.io/chromVAR/); `--run_chromvar`, `--chromvar_motifs`).
+   6. Infer nucleosome-free regions, nucleosome positions and occupancy profiles over consensus accessible regions ([`NucleoATAC`](https://nucleoatac.readthedocs.io/en/latest/); `--run_nucleoatac`).
+10. Genetic analyses from ATAC-seq reads
+   1. Run a dedicated genetic-layer alignment and preprocessing path using [`BWA-MEM`](https://sourceforge.net/projects/bio-bwa/files/), [`GATK`](https://gatk.broadinstitute.org/) duplicate marking and optional BQSR (`--run_variants`, `--bwa_index`, `--known_sites`).
+   2. Call short variants with one or more supported callers ([`GATK HaplotypeCaller`](https://gatk.broadinstitute.org/), [`FreeBayes`](https://github.com/freebayes/freebayes), [`bcftools mpileup`](https://samtools.github.io/bcftools/bcftools.html), [`DeepVariant`](https://github.com/google/deepvariant); `--variant_callers`).
+   3. Optionally restrict final VCF files to variants located in consensus accessible regions widened by a user-defined window ([`bcftools`](https://samtools.github.io/bcftools/bcftools.html); `--variants_in_peaks_only`, `--peak_filter_slop`).
+   4. Annotate variants and generate optional MAF/oncoplot outputs ([`VEP`](https://www.ensembl.org/info/docs/tools/vep/index.html), [`vcf2maf`](https://github.com/mskcc/vcf2maf), [`maftools`](https://bioconductor.org/packages/release/bioc/html/maftools.html); `--skip_variant_annotation`, `--run_oncoplot`).
+   5. Estimate copy-number profiles from ATAC-seq reads after optional removal of reads overlapping accessible regions ([`QDNAseq`](https://bioconductor.org/packages/QDNAseq/), [`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/); `--run_cnv`, `--qdnaseq_bins_rds`, `--qdnaseq_filter_peaks`).
+   6. Estimate telomere content and telomeric variant repeat composition from aligned reads ([`TelomereHunter2`](https://pypi.org/project/telomerehunter2/); `--run_telomerehunter2`).
 
-These downstream layers are disabled by default and can be enabled independently with their corresponding parameters. They are intended to extend ATAC-seq interpretation while keeping the standard nf-core/atacseq QC, alignment, peak calling and differential accessibility workflow intact.
+These downstream layers are disabled by default and can be enabled independently. They are intended to extend ATAC-seq interpretation while keeping the standard nf-core/atacseq QC, alignment, peak calling and differential accessibility workflow intact.
 
 ## Usage
 
