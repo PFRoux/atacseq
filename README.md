@@ -29,7 +29,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ## Pipeline summary
 
-![nf-core/atacseq metro map](docs/images/nf-core-atacseq_metro_map_grey.png)
+![nf-core/atacseq metro map](docs/images/nf-core-atacseq_metro_map_grey.svg)
 
 1. Raw read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Adapter trimming ([`Trim Galore!`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
