@@ -11,11 +11,7 @@ workflow {
         file("$projectDir/../../../../tests/data/chromvar_regions.bed", checkIfExists: true),
         file("$projectDir/../../../../tests/data/chromvar_genome.fa", checkIfExists: true),
         file("$projectDir/../../../../tests/data/chromvar_genome.fa.fai", checkIfExists: true),
-        file("$projectDir/../../../../tests/data/tobias_motifs.jaspar", checkIfExists: true),
-        1,
-        1,
-        50,
-        0.00005
+        file("$projectDir/../../../../tests/data/tobias_motifs.jaspar", checkIfExists: true)
     ])
 
     CHROMVAR(ch_input)

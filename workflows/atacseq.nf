@@ -594,9 +594,7 @@ workflow ATACSEQ {
                 .combine(ch_fasta)
                 .combine(ch_fai)
                 .combine(ch_chromvar_motifs)
-                .map { meta, counts, bed, fasta, fai, motifs ->
-                    [ meta, counts, bed, fasta, fai, motifs, params.chromvar_min_counts, params.chromvar_min_samples, params.chromvar_background_peaks, params.chromvar_motif_p_cutoff ]
-                }
+                .map { meta, counts, bed, fasta, fai, motifs -> [ meta, counts, bed, fasta, fai, motifs ] }
                 .set { ch_chromvar_input }
 
             MERGED_LIBRARY_CHROMVAR (
