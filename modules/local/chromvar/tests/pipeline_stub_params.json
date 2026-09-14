@@ -1,0 +1,4 @@
+{
+    "run_chromvar": true,
+    "chromvar_motifs": "tests/data/tobias_motifs.jaspar"
+}

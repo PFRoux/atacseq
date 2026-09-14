@@ -1,29 +1,42 @@
 #!/usr/bin/env Rscript
 
 suppressPackageStartupMessages({
-    library(optparse)
     library(GenomicRanges)
     library(SummarizedExperiment)
     library(Rsamtools)
-    library(TFBSTools)
-    library(motifmatchr)
+    library(Matrix)
     library(chromVAR)
 })
 
-option_list <- list(
-    make_option("--counts", type = "character"),
-    make_option("--regions", type = "character"),
-    make_option("--fasta", type = "character"),
-    make_option("--motifs", type = "character"),
-    make_option("--out-prefix", type = "character", default = "chromvar"),
-    make_option("--min-counts", type = "integer", default = 1),
-    make_option("--min-samples", type = "integer", default = 1),
-    make_option("--background-peaks", type = "integer", default = 50),
-    make_option("--motif-p-cutoff", type = "double", default = 5e-05)
-)
-opt <- parse_args(OptionParser(option_list = option_list))
+parse_options <- function(arguments) {
+    options <- list(
+        counts = NULL,
+        matches = NULL,
+        motif_peaks = NULL,
+        motif_ids = NULL,
+        fasta = NULL,
+        out_prefix = "chromvar",
+        min_counts = 1L,
+        min_samples = 1L,
+        background_peaks = 50L
+    )
+    if (length(arguments) %% 2L != 0L) stop("Options must be provided as --name value pairs.", call. = FALSE)
+    for (index in seq.int(1L, length(arguments), by = 2L)) {
+        key <- sub("^--", "", arguments[[index]])
+        key <- gsub("-", "_", key, fixed = TRUE)
+        if (!key %in% names(options)) stop("Unknown option: ", arguments[[index]], call. = FALSE)
+        options[[key]] <- arguments[[index + 1L]]
+    }
+    options$min_counts <- as.integer(options$min_counts)
+    options$min_samples <- as.integer(options$min_samples)
+    options$background_peaks <- as.integer(options$background_peaks)
+    if (anyNA(unlist(options[c("min_counts", "min_samples", "background_peaks")]))) stop("Numeric options must be valid integers.", call. = FALSE)
+    options
+}
 
-required <- c("counts", "regions", "fasta", "motifs")
+opt <- parse_options(commandArgs(trailingOnly = TRUE))
+
+required <- c("counts", "matches", "motif_peaks", "motif_ids", "fasta")
 missing <- required[vapply(required, function(x) is.null(opt[[x]]) || !nzchar(opt[[x]]), logical(1))]
 if (length(missing) > 0) {
     stop("Missing required option(s): ", paste(missing, collapse = ", "), call. = FALSE)
@@ -47,24 +60,40 @@ read_counts <- function(path) {
 }
 
 counts_input <- read_counts(opt$counts)
-regions <- counts_input$tab
+motif_peaks <- read.delim(opt$motif_peaks, check.names = FALSE, stringsAsFactors = FALSE)
+motif_ids <- read.delim(opt$motif_ids, check.names = FALSE, stringsAsFactors = FALSE)
+required_peak_cols <- c("row_index", "region_id", "chrom", "start", "end")
+required_motif_cols <- c("column_index", "motif_id")
+if (length(setdiff(required_peak_cols, colnames(motif_peaks))) > 0L) stop("Motif peak mapping is malformed.", call. = FALSE)
+if (length(setdiff(required_motif_cols, colnames(motif_ids))) > 0L) stop("Motif identifier mapping is malformed.", call. = FALSE)
+
+count_order <- match(motif_peaks$region_id, counts_input$tab$region_id)
+if (anyNA(count_order)) stop("Motif-match regions are not all represented in the count matrix.", call. = FALSE)
+counts <- counts_input$counts[count_order, , drop = FALSE]
+rownames(counts) <- motif_peaks$region_id
+annotations <- readMM(opt$matches)
+if (nrow(annotations) != nrow(counts) || ncol(annotations) != nrow(motif_ids)) {
+    stop("Motif-match matrix dimensions do not match its region or motif mapping.", call. = FALSE)
+}
+colnames(annotations) <- motif_ids$motif_id
 
 gr <- GRanges(
-    seqnames = regions$chrom,
-    ranges = IRanges(start = as.integer(regions$start) + 1L, end = as.integer(regions$end)),
-    region_id = rownames(counts_input$counts)
+    seqnames = motif_peaks$chrom,
+    ranges = IRanges(start = as.integer(motif_peaks$start) + 1L, end = as.integer(motif_peaks$end)),
+    region_id = motif_peaks$region_id
 )
 
 keep <- width(gr) > 0 &
-    rowSums(counts_input$counts, na.rm = TRUE) >= opt$`min-counts` &
-    rowSums(counts_input$counts > 0, na.rm = TRUE) >= opt$`min-samples`
+    rowSums(counts, na.rm = TRUE) >= opt$min_counts &
+    rowSums(counts > 0, na.rm = TRUE) >= opt$min_samples
 
 if (sum(keep) < 2) {
     stop("Fewer than two peaks remain after chromVAR filtering.", call. = FALSE)
 }
 
-counts <- counts_input$counts[keep, , drop = FALSE]
+counts <- counts[keep, , drop = FALSE]
 gr <- gr[keep]
+annotations <- annotations[keep, , drop = FALSE]
 
 se <- SummarizedExperiment(
     assays = list(counts = counts),
@@ -75,30 +104,11 @@ se <- SummarizedExperiment(
 fa <- FaFile(opt$fasta)
 se <- addGCBias(se, genome = fa)
 
-motifs <- readJASPARMatrix(opt$motifs, matrixClass = "PFM")
-if (length(motifs) == 0) {
-    stop("No motifs were parsed from the JASPAR motif file.", call. = FALSE)
-}
+bg <- getBackgroundPeaks(se, niterations = opt$background_peaks)
+dev <- computeDeviations(object = se, annotations = annotations, background_peaks = bg)
 
-motif_ix <- matchMotifs(motifs, se, genome = fa, out = "matches", p.cutoff = opt$`motif-p-cutoff`)
-bg <- getBackgroundPeaks(se, niterations = opt$`background-peaks`)
-dev <- computeDeviations(object = se, annotations = motif_ix, background_peaks = bg)
-
-input_motif_ids <- vapply(motifs, TFBSTools::ID, character(1))
-input_motif_names <- vapply(
-    motifs,
-    function(motif) {
-        value <- tryCatch(TFBSTools::name(motif), error = function(e) "")
-        if (!nzchar(value)) {
-            value <- TFBSTools::ID(motif)
-        }
-        value
-    },
-    character(1)
-)
 motif_ids <- rownames(assay(dev, "deviations"))
-motif_names <- input_motif_names[match(motif_ids, input_motif_ids)]
-motif_names[is.na(motif_names) | motif_names == ""] <- motif_ids[is.na(motif_names) | motif_names == ""]
+motif_names <- motif_ids
 
 write_long_matrix <- function(mat, value_name, path) {
     row_ids <- rownames(mat)
@@ -116,8 +126,8 @@ write_long_matrix <- function(mat, value_name, path) {
 deviation_matrix <- assay(dev, "deviations")
 z_matrix <- assay(dev, "z")
 
-write_long_matrix(deviation_matrix, "deviation", paste0(opt$`out-prefix`, ".chromvar_deviations.tsv"))
-write_long_matrix(z_matrix, "z", paste0(opt$`out-prefix`, ".chromvar_z.tsv"))
+write_long_matrix(deviation_matrix, "deviation", paste0(opt$out_prefix, ".chromvar_deviations.tsv"))
+write_long_matrix(z_matrix, "z", paste0(opt$out_prefix, ".chromvar_z.tsv"))
 
 variability <- as.data.frame(computeVariability(dev))
 variability$motif_id <- rownames(variability)
@@ -130,22 +140,22 @@ if ("p_value" %in% colnames(variability)) {
     variability$padj <- NA_real_
 }
 variability <- variability[, c("motif_id", "motif_name", setdiff(colnames(variability), c("motif_id", "motif_name"))), drop = FALSE]
-write.table(variability, paste0(opt$`out-prefix`, ".chromvar_variability.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(variability, paste0(opt$out_prefix, ".chromvar_variability.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 pca_input <- t(z_matrix)
 pca_input[!is.finite(pca_input)] <- 0
 pca <- prcomp(pca_input, center = TRUE, scale. = FALSE)
 pca_df <- data.frame(sample = rownames(pca$x), pca$x[, seq_len(min(5, ncol(pca$x))), drop = FALSE], check.names = FALSE)
-write.table(pca_df, paste0(opt$`out-prefix`, ".chromvar_pca.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(pca_df, paste0(opt$out_prefix, ".chromvar_pca.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 saveRDS(
     list(
         counts = se,
-        motifs = motif_ix,
+        motif_matches = annotations,
         background_peaks = bg,
         deviations = dev,
         variability = variability,
         pca = pca_df
     ),
-    paste0(opt$`out-prefix`, ".chromvar.rds")
+    paste0(opt$out_prefix, ".chromvar.rds")
 )

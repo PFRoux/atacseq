@@ -35,6 +35,7 @@ include { BED_CONSENSUS_QUANTIFY_QC_BEDTOOLS_FEATURECOUNTS_DESEQ2 as MERGED_REPL
 include { BAM_FOOTPRINT_TOBIAS as MERGED_LIBRARY_FOOTPRINT_TOBIAS } from '../subworkflows/local/bam_footprint_tobias'
 include { BAM_SUPERENHANCER_ROSE as MERGED_LIBRARY_SUPERENHANCER_ROSE } from '../subworkflows/local/bam_superenhancer_rose'
 include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS } from '../modules/local/bedtools/multicov_counts'
+include { MOTIFMATCHR_MATCHMOTIFS as MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS } from '../modules/local/motifmatchr'
 include { CHROMVAR as MERGED_LIBRARY_CHROMVAR } from '../modules/local/chromvar'
 include { NUCLEOATAC as MERGED_LIBRARY_NUCLEOATAC } from '../modules/local/nucleoatac'
 include { TELOMEREHUNTER2 as MERGED_LIBRARY_TELOMEREHUNTER2 } from '../modules/local/telomerehunter2'
@@ -586,15 +587,24 @@ workflow ATACSEQ {
         ch_versions = ch_versions.mix(MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS.out.versions)
 
         if (params.run_chromvar) {
+            ch_macs3_consensus_library_bed
+                .combine(ch_fasta)
+                .combine(ch_chromvar_motifs)
+                .map { meta, bed, fasta, motifs -> [ meta, bed, fasta, motifs ] }
+                .set { ch_motifmatchr_input }
+
+            MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS(ch_motifmatchr_input)
+            ch_versions = ch_versions.mix(MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS.out.versions)
+
             MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_COUNTS
                 .out
                 .counts
                 .join(ch_macs3_consensus_library_bed, by: [0])
-                .map { meta, counts, bed -> [ meta, counts, bed ] }
+                .join(MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS.out.matches, by: [0])
+                .join(MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS.out.peaks, by: [0])
+                .join(MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS.out.motifs, by: [0])
                 .combine(ch_fasta)
-                .combine(ch_fai)
-                .combine(ch_chromvar_motifs)
-                .map { meta, counts, bed, fasta, fai, motifs -> [ meta, counts, bed, fasta, fai, motifs ] }
+                .map { meta, counts, bed, matches, motif_peaks, motif_ids, fasta -> [ meta, counts, matches, motif_peaks, motif_ids, fasta ] }
                 .set { ch_chromvar_input }
 
             MERGED_LIBRARY_CHROMVAR (

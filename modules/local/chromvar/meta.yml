@@ -15,11 +15,6 @@ tools:
       doi: "10.1038/nmeth.4401"
       licence: ["MIT"]
       identifier: "biotools:chromvar"
-  - motifmatchr:
-      description: "Fast motif matching in genomic ranges"
-      homepage: "https://greenleaflab.github.io/motifmatchr/"
-      documentation: "https://greenleaflab.github.io/motifmatchr/"
-      licence: ["MIT"]
 
 input:
   - meta:
@@ -31,34 +26,22 @@ input:
       type: file
       description: Raw count matrix generated over consensus peaks
       pattern: "*.raw_counts.tsv"
-  - regions:
+  - matches:
       type: file
-      description: Consensus peak BED file used for counting
-      pattern: "*.bed"
+      description: Sparse motif-by-peak match matrix produced by motifmatchr
+      pattern: "*.motif_matches.mtx"
+  - motif_peaks:
+      type: file
+      description: Mapping between motif-match matrix rows and consensus peaks
+      pattern: "*.motifmatchr_peaks.tsv"
+  - motif_ids:
+      type: file
+      description: Mapping between motif-match matrix columns and motif identifiers
+      pattern: "*.motifmatchr_motifs.tsv"
   - fasta:
       type: file
       description: Reference genome FASTA
       pattern: "*.{fa,fasta}"
-  - fai:
-      type: file
-      description: FASTA index
-      pattern: "*.fai"
-  - motifs:
-      type: file
-      description: Motif file in JASPAR format
-      pattern: "*"
-  - min_counts:
-      type: integer
-      description: Minimum total counts required to keep a peak
-  - min_samples:
-      type: integer
-      description: Minimum number of samples with non-zero counts required to keep a peak
-  - background_peaks:
-      type: integer
-      description: Number of background peak iterations for chromVAR
-  - motif_p_cutoff:
-      type: number
-      description: Motif matching p-value cutoff
 
 output:
   - meta:

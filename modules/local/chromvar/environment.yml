@@ -2,9 +2,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconductor-chromvar=1.28.0
-  - bioconductor-motifmatchr
-  - bioconductor-tfbstools
+  - bioconductor-chromvar=1.32.0
   - bioconductor-rsamtools
   - bioconductor-summarizedexperiment
-  - r-optparse

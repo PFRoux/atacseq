@@ -1,0 +1,54 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "motifmatchr_matchmotifs"
+description: Match JASPAR position frequency matrices to ATAC-seq peaks using motifmatchr
+keywords:
+  - atac-seq
+  - motifs
+  - motifmatchr
+tools:
+  - motifmatchr:
+      description: "Fast motif matching in genomic ranges"
+      homepage: "https://greenleaflab.github.io/motifmatchr/"
+      documentation: "https://greenleaflab.github.io/motifmatchr/"
+      licence: ["MIT"]
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample or library metadata
+  - peaks:
+      type: file
+      description: BED-formatted genomic regions
+      pattern: "*.bed"
+  - fasta:
+      type: file
+      description: Reference genome FASTA
+      pattern: "*.{fa,fasta}"
+  - motifs:
+      type: file
+      description: JASPAR motif file
+      pattern: "*"
+output:
+  - meta:
+      type: map
+      description: Groovy Map containing sample or library metadata
+  - matches:
+      type: file
+      description: Sparse MatrixMarket motif-by-peak match matrix
+      pattern: "*.motif_matches.mtx"
+  - peaks:
+      type: file
+      description: Mapping between matrix rows and genomic peaks
+      pattern: "*.motifmatchr_peaks.tsv"
+  - motifs:
+      type: file
+      description: Mapping between matrix columns and motif identifiers
+      pattern: "*.motifmatchr_motifs.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

@@ -8,7 +8,7 @@ process CHROMVAR {
         'quay.io/biocontainers/bioconductor-chromvar:1.32.0--r45ha27e39d_0' }"
 
     input:
-    tuple val(meta), path(counts), path(regions), path(fasta), path(fai), path(motifs)
+    tuple val(meta), path(counts), path(matches), path(motif_peaks), path(motif_ids), path(fasta)
 
     output:
     tuple val(meta), path("*.chromvar_deviations.tsv") , emit: deviations
@@ -27,16 +27,16 @@ process CHROMVAR {
     """
     Rscript ${moduleDir}/resources/usr/bin/chromvar_run.R \\
         --counts ${counts} \\
-        --regions ${regions} \\
+        --matches ${matches} \\
+        --motif-peaks ${motif_peaks} \\
+        --motif-ids ${motif_ids} \\
         --fasta ${fasta} \\
-        --motifs ${motifs} \\
         --out-prefix ${prefix} \\
         $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         chromvar: \$(Rscript -e 'cat(as.character(utils::packageVersion("chromVAR")))')
-        motifmatchr: \$(Rscript -e 'cat(as.character(utils::packageVersion("motifmatchr")))')
     END_VERSIONS
     """
 
