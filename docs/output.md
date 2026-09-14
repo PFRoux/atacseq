@@ -399,6 +399,22 @@ If `--run_variants` is specified, the pipeline runs BWA-MEM and GATK preprocessi
 
 If `--run_cnv` is specified, the pipeline runs [QDNAseq](https://bioconductor.org/packages/QDNAseq/) on the genetic-layer merged library BAM files. A QDNAseq bins RDS file matching the reference genome and selected bin size must be supplied with `--qdnaseq_bins_rds`. By default, reads overlapping merged library consensus peaks widened by `--qdnaseq_peak_slop` are removed before QDNAseq so that copy-number estimates are driven by background chromatin rather than highly accessible ATAC-seq peaks. This behaviour can be disabled with `--qdnaseq_filter_peaks false`.
 
+### Mitochondrial variants and coverage
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `<ALIGNER>/merged_library/mgatk/<SAMPLE>/`
+  - `*.mgatk/`: Complete mgatk output directory.
+  - `final/*.rds`: R objects for downstream mitochondrial variant analysis.
+  - `final/*.coverage.txt.gz`: Per-base mitochondrial coverage table.
+  - `final/*.depthTable.txt`: Mitochondrial depth summary.
+  - `final/*.{A,C,G,T}.txt.gz`: Per-base nucleotide count tables.
+
+</details>
+
+If `--run_mgatk` is specified, the pipeline runs [mgatk](https://github.com/caleblareau/mgatk) on each merged library-level filtered BAM file. The mitochondrial FASTA supplied with `--mgatk_mito_fasta` must use the same contig name as the BAM header; this explicit input avoids silently mixing `MT`, `chrM` and other reference conventions.
+
 ### Telomere content and telomeric variant repeats
 
 <details markdown="1">

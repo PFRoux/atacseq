@@ -1,0 +1,73 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "mgatk_call"
+description: Call mitochondrial variants and generate mitochondrial coverage profiles from an indexed BAM file
+keywords:
+  - mitochondria
+  - mtDNA
+  - variants
+  - ATAC-seq
+tools:
+  - mgatk:
+      description: "Mitochondrial genome analysis toolkit"
+      homepage: "https://github.com/caleblareau/mgatk"
+      documentation: "https://github.com/caleblareau/mgatk/wiki"
+      tool_dev_url: "https://github.com/caleblareau/mgatk"
+      doi: "10.1038/s41587-020-0645-6"
+      licence: ["MIT"]
+      identifier: "biotools:mgatk"
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - bam:
+        type: file
+        description: Coordinate-sorted BAM file
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index file
+        pattern: "*.{bai,csi}"
+    - mito_fasta:
+        type: file
+        description: Mitochondrial reference FASTA passed to mgatk
+        pattern: "*.{fa,fasta,fna}"
+output:
+  outdir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.mgatk":
+          type: directory
+          description: Complete mgatk output directory
+          pattern: "*.mgatk"
+  rds:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.mgatk/final/*.rds":
+          type: file
+          description: R serialized objects for downstream mitochondrial analysis
+          pattern: "*.rds"
+  coverage:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.mgatk/final/*.coverage.txt.gz":
+          type: file
+          description: Per-base mitochondrial coverage table
+          pattern: "*.coverage.txt.gz"
+  versions_mgatk:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - mgatk:
+          type: string
+          description: The name of the tool
+      - mgatk --version 2>&1 | sed -E 's/.*version //':
+          type: eval
+          description: The expression used to obtain the tool version
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

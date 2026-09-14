@@ -575,6 +575,27 @@
                 }
             }
         },
+        "mgatk_options": {
+            "title": "mgatk options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Options for optional mitochondrial variant and coverage analysis with mgatk.",
+            "properties": {
+                "run_mgatk": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run mgatk on merged library-level filtered BAM files.",
+                    "fa_icon": "fas fa-check-square"
+                },
+                "mgatk_mito_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "FASTA containing the mitochondrial reference contig used by mgatk.",
+                    "fa_icon": "far fa-file-code"
+                }
+            }
+        },
         "cnv_options": {
             "title": "CNV options",
             "type": "object",
@@ -1035,6 +1056,9 @@
         },
         {
             "$ref": "#/$defs/nucleoatac_options"
+        },
+        {
+            "$ref": "#/$defs/mgatk_options"
         },
         {
             "$ref": "#/$defs/cnv_options"

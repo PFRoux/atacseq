@@ -38,6 +38,7 @@ include { BEDTOOLS_MULTICOV_COUNTS as MERGED_LIBRARY_CONSENSUS_PEAKS_MULTICOV_CO
 include { MOTIFMATCHR_MATCHMOTIFS as MERGED_LIBRARY_MOTIFMATCHR_MATCHMOTIFS } from '../modules/local/motifmatchr'
 include { CHROMVAR as MERGED_LIBRARY_CHROMVAR } from '../modules/local/chromvar'
 include { NUCLEOATAC as MERGED_LIBRARY_NUCLEOATAC } from '../modules/local/nucleoatac'
+include { MGATK_CALL as MERGED_LIBRARY_MGATK_CALL } from '../modules/local/mgatk/call'
 include { TELOMEREHUNTER2 as MERGED_LIBRARY_TELOMEREHUNTER2 } from '../modules/local/telomerehunter2'
 include { SAMTOOLS_VIEW_OUTSIDE_REGIONS as CNV_BAM_OUTSIDE_PEAKS } from '../modules/local/samtools/view_outside_regions'
 include { QDNASEQ as MERGED_LIBRARY_QDNASEQ } from '../modules/local/qdnaseq'
@@ -124,6 +125,7 @@ workflow ATACSEQ {
     ch_multiqc_merged_replicate_deseq2_clustering_header = file("$projectDir/assets/multiqc/merged_replicate_deseq2_clustering_header.txt", checkIfExists: true)
     ch_tobias_motifs                                     = params.tobias_motifs ? channel.fromPath(params.tobias_motifs, checkIfExists: true) : channel.empty()
     ch_chromvar_motifs                                   = params.chromvar_motifs ? channel.fromPath(params.chromvar_motifs, checkIfExists: true) : channel.empty()
+    ch_mgatk_mito_fasta                                   = params.mgatk_mito_fasta ? channel.fromPath(params.mgatk_mito_fasta, checkIfExists: true) : channel.empty()
     ch_telomerehunter2_cytoband                          = params.telomerehunter2_cytoband ? channel.fromPath(params.telomerehunter2_cytoband, checkIfExists: true) : channel.value([])
 
     // Check ataqv_mito_reference parameter
@@ -778,6 +780,24 @@ workflow ATACSEQ {
             ch_qdnaseq_multiqc = MERGED_LIBRARY_QDNASEQ.out.bins
             ch_versions = ch_versions.mix(MERGED_LIBRARY_QDNASEQ.out.versions)
         }
+    }
+
+    //
+    // MODULE: mgatk mitochondrial variants and coverage
+    //
+    if (params.run_mgatk) {
+        ch_bam_bai
+            .map { meta, bam, bai ->
+                def signal_bam = bam instanceof List ? bam[0] : bam
+                def signal_bai = bai instanceof List ? bai[0] : bai
+                [ meta, signal_bam, signal_bai ]
+            }
+            .combine(ch_mgatk_mito_fasta)
+            .map { meta, bam, bai, mito_fasta -> [ meta, bam, bai, mito_fasta ] }
+            .set { ch_mgatk_input }
+
+        MERGED_LIBRARY_MGATK_CALL(ch_mgatk_input)
+        ch_versions = ch_versions.mix(MERGED_LIBRARY_MGATK_CALL.out.versions_mgatk)
     }
 
     //

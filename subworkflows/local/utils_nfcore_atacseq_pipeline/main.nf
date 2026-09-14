@@ -201,6 +201,10 @@ def validateInputParameters() {
         error("NucleoATAC requires consensus peak regions. Please disable '--skip_consensus_peaks' or disable '--run_nucleoatac'.")
     }
 
+    if (params.run_mgatk && !params.mgatk_mito_fasta) {
+        error("mgatk requires a mitochondrial FASTA. Please provide '--mgatk_mito_fasta chrM.fa' or disable '--run_mgatk'.")
+    }
+
     if (params.run_cnv && !params.qdnaseq_bins_rds) {
         error("QDNAseq CNV calling requires a bins RDS file. Please provide one with '--qdnaseq_bins_rds bins.rds' or disable '--run_cnv'.")
     }

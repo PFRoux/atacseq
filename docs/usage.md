@@ -188,6 +188,7 @@ The epigenetic layer analyses chromatin accessibility, regulatory regions and tr
 - `--run_footprinting` runs TOBIAS ATACorrect, ScoreBigwig and one BINDetect analysis across all samples. A motif file must be supplied with `--tobias_motifs`.
 - `--run_chromvar` runs chromVAR on consensus peak counts. A motif file must be supplied with `--chromvar_motifs`.
 - `--run_nucleoatac` runs NucleoATAC on consensus peak regions widened by `--nucleoatac_region_slop`.
+- `--run_mgatk` enables mitochondrial variant and coverage analysis. It requires `--mgatk_mito_fasta`, a single-contig mitochondrial FASTA whose header matches the aligned BAMs.
 
 These analyses require a consistent chromosome naming convention across FASTA, GTF/GFF, blacklist, motif-dependent annotations where relevant, alignment indices and BAM files. For example, do not mix `chr1` peak files with reference indices using `1`.
 
@@ -215,6 +216,9 @@ run_footprinting: true
 tobias_motifs: './motifs.jaspar'
 run_chromvar: true
 chromvar_motifs: './motifs.jaspar'
+
+run_mgatk: true
+mgatk_mito_fasta: './chrM.fa'
 
 run_variants: true
 variant_callers: 'haplotypecaller,freebayes,bcftools'
